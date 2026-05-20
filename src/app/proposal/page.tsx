@@ -84,9 +84,7 @@ export default function ProposalPage() {
     <div className="min-h-screen bg-gradient-to-b from-[#1a1a2e] to-[#16213e]">
       <header className="bg-[#FF6B00] py-5 px-6 shadow-lg">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-            <span className="text-[#FF6B00] font-bold text-lg">W</span>
-          </div>
+          <img src="/fornitorea-logo.jpg" alt="FornitoreA Luce & Gas" className="h-10 w-auto rounded" />
           <h1 className="text-white font-bold text-xl">FornitoreA Luce & Gas</h1>
         </div>
       </header>
