@@ -1,4 +1,4 @@
-# BillScan POC — FornitoreA Luce & Gas
+# BillScan POC — Luce & Gas
 
 Tool di ingestion e standardizzazione bollette energetiche con proposta commerciale automatica.
 
@@ -28,28 +28,79 @@ clienti (PK: codice_fiscale)
          └──< bolletta_consumi_storici (storico mensile)
 
 proposte_offerta (PK interna, codice_redenzione 6 char [A-Z2-9]) ──> clienti
+  └── email_contatto, telefono_contatto, consenso_trattamento/marketing/profilazione, consenso_at
 documenti_originali (storage ref) ──> bollette
+offerte (6 offerte reali da Excel Maggio 2026)
 ```
 
-Vedi migrazione completa: `../supabase/migrations/001_initial_schema.sql`
+Migrazioni:
+- `001_initial_schema.sql` — tabelle principali
+- `002_offerte_fornitorea.sql` — (obsoleta, vedi 004)
+- `003_gdpr_contact.sql` — campi GDPR su proposte_offerta
+- `004_offerte_rewrite.sql` — tabella offerte riscritta da Excel
 
 ## Flusso utente
 
 1. **Upload** → PDF o foto bolletta → drag & drop
-2. **Estrazione** → Gemini analizza il documento → JSON validato Zod
+2. **Estrazione** → Gemini analizza il documento → JSON validato Zod (~60s)
 3. **Conferma/rettifica** → card riassuntiva con campi editabili inline
-4. **Email** → proposta con codice 6 char + link
-5. **Login col codice** → pagina proposta con confronto prezzi
-6. **Accettazione** → stato aggiornato con timestamp
+4. **Contatto + GDPR** → email (obbl.), telefono, 3 checkbox consenso
+5. **Proposta** → confronto prezzi, dettaglio costi, sconto multiservice, codice personale
+6. **Conferma download** → bottone "Conferma per scaricare e essere ricontattato" → PDF
+7. **Login col codice** → `/proposal?code=XXX` → pagina proposta con accettazione
+
+## Commodity deterministica
+
+POD → luce, PDR → gas. Il validation Zod forza `tipo_fornitura` in base a `tipo_punto`, non si affida alla classificazione del LLM. Le offerte sono filtrate per `commodity` corrispondente.
+
+## Offerte (Excel Maggio 2026)
+
+6 offerte attive nel DB:
+
+| Offerta | Commodity | Indice | Spread | CCV/mese | Sconto/mese | Durata |
+|---------|----------|--------|--------|----------|-------------|--------|
+| NEW START CASA SCONTO MULTISERVICE | Gas | PSV | 0.0965 €/Smc | 13€ | 5.5€ | 24m |
+| NEW START CASA | Gas | PSV | 0.0965 €/Smc | 13€ | — | 24m |
+| NEW START CASA SCONTO MULTISERVICE | Gas | PSV | 0.0965 €/Smc | 13€ | 5.5€ | 24m |
+| NEW START CASA SCONTO MULTISERVICE | Luce | PUN | 0.0278 €/kWh | 13€ | 5.5€ | 24m |
+| NEW START CASA SCONTO MULTISERVICE | Luce | PUN | 0.0278 €/kWh | 13€ | 5.5€ | 24m |
+| SMARTPHONE PACK – New Start Casa Sconto Multiservice | Luce | PUN | 0.0278 €/kWh | 13€ | 5.5€ | 36m |
+
+Matching: prezzo = indice (PUN/PSV) + spread × consumo + CCV − sconto + trasporto + oneri + accise + IVA.
 
 ## API Routes
 
 | Route | Metodo | Descrizione |
 |-------|--------|-------------|
 | `/api/extract` | POST | Upload PDF → estrazione Gemini → JSON |
-| `/api/confirm` | POST | Persistenza atomica + generazione codice + invio email |
+| `/api/confirm` | POST | Persistenza atomica + GDPR + matching offerta + generazione codice |
 | `/api/auth-code` | GET | Lookup proposta by codice |
 | `/api/auth-code` | POST | Accettazione offerta |
+
+## Dettaglio costi nella proposta
+
+Il dettaglio costi stimati mostra tutte le voci e la somma è matematicamente coerente:
+
+```
+Quota energia       +€X.XX
+CCV                 +€X.XX
+Sconto multiservice −€5.50  (solo se presente)
+Trasporto e gestione +€X.XX
+Oneri di sistema    +€X.XX
+Accise              +€X.XX
+IVA                 +€X.XX
+────────────────────────────
+Totale stimato       €XX.XX  (= somma righe sopra)
+```
+
+## GDPR
+
+PRIMA di generare la proposta: email obbligatoria + 3 checkbox:
+- ✅ Trattamento dati (obbligatorio, art. 6)
+- ☐ Comunicazioni commerciali (facoltativo, art. 7)
+- ☐ Profilazione (facoltativo, art. 7)
+
+Tutti i consensi e il timestamp sono salvati in `proposte_offerta`.
 
 ## Golden Test (4 PDF reali)
 
@@ -71,7 +122,6 @@ Stesso intestatario (Mario Rossi, RSSMRA85M01H501Z), stesso POD con switch Forni
 | `SUPABASE_SERVICE_ROLE_KEY` | server only | Bypass RLS |
 | `GEMINI_API_KEY` | server only | Google AI Studio |
 | `RESEND_API_KEY` | server only | Email provider |
-| `RESEND_TEST_TO` | server only | Override destinatario in test mode |
 | `NEXT_PUBLIC_APP_URL` | client+server | URL pubblico (per link email) |
 
 ## Sviluppo locale
@@ -84,14 +134,12 @@ npm run dev
 
 ## Stato avanzamento
 
-Vedi `../PRD_BillScan_POC.md` §11 per il piano fasi.
-
 | Fase | Stato | Note |
 |------|-------|------|
 | F0 — Setup | ✅ Completata | DB, repo, build |
 | F1 — Estrazione | ✅ Completata | 4/4 PDF golden passano |
 | F2 — Conferma & persistenza | ✅ Completata | UI + salvataggio atomico |
-| F3 — Email & codice | ✅ Completata | Resend test mode, codice [A-Z2-9] |
-| F4 — Login & accettazione | ✅ Completata | Codice → proposta → accetta |
-| F5 — UX polish & deploy | 🟡 In corso | Deploy Vercel live, manca: offerta reale, logo, polish UI |
-| ** TODO prossimo** | ⬜ | Tabella offerte FornitoreA nel DB + logica matching |
+| F3 — GDPR & contatti | ✅ Completata | Step contatto + 3 consensi |
+| F4 — Proposta & matching | ✅ Completata | Offerte reali Excel, spread/CCV/sconto |
+| F5 — UX polish & deploy | ✅ Completata | Countdown, PDF, conferma download |
+| F6 — Produzione | ⬜ Da fare | Resend DNS, dominio, informativa privacy completa |
