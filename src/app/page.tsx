@@ -190,7 +190,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-        )
+        )}
 
         {/* Step 3: Confirm data */}
         {step === "confirm" && editedData && (
