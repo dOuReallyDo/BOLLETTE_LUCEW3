@@ -8,13 +8,33 @@ import crypto from "crypto";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { data, storagePath, fileName, mimeType, userEmail } = body as {
+    const { data, storagePath, fileName, mimeType, contact, gdpr } = body as {
       data: ValidatedBillData;
       storagePath: string;
       fileName: string;
       mimeType: string;
-      userEmail?: string;
+      contact?: { email?: string; telefono?: string };
+      gdpr?: {
+        consenso_trattamento: boolean;
+        consenso_marketing: boolean;
+        consenso_profilazione: boolean;
+        consenso_at?: string;
+      };
     };
+
+    // Validate GDPR consent
+    if (!gdpr?.consenso_trattamento) {
+      return NextResponse.json(
+        { error: "Il consenso al trattamento dei dati è obbligatorio" },
+        { status: 400 }
+      );
+    }
+    if (!contact?.email) {
+      return NextResponse.json(
+        { error: "L'indirizzo email è obbligatorio" },
+        { status: 400 }
+      );
+    }
 
     // Re-validate
     const validated = extractedBillDataSchema.parse(data);
@@ -26,9 +46,9 @@ export async function POST(req: NextRequest) {
         codice_fiscale: validated.cliente.codice_fiscale,
         nome: validated.cliente.nome,
         cognome: validated.cliente.cognome,
-        email: userEmail || validated.cliente.email_contatto_bolletta || null,
+        email: contact.email || validated.cliente.email_contatto_bolletta || null,
         email_contatto_bolletta: validated.cliente.email_contatto_bolletta || null,
-        telefono: validated.cliente.telefono || null,
+        telefono: contact.telefono || validated.cliente.telefono || null,
       })
       .select()
       .single();
@@ -214,7 +234,13 @@ export async function POST(req: NextRequest) {
         offerta_proposta: offertaProposta,
         prezzo_proposto: prezzoProposto,
         risparmio_stimato: risparmioStimato,
-        email_inviata_a: userEmail || validated.cliente.email_contatto_bolletta || null,
+        email_inviata_a: contact.email || validated.cliente.email_contatto_bolletta || null,
+        email_contatto: contact.email || null,
+        telefono_contatto: contact.telefono || null,
+        consenso_trattamento: gdpr.consenso_trattamento,
+        consenso_marketing: gdpr.consenso_marketing,
+        consenso_profilazione: gdpr.consenso_profilazione,
+        consenso_at: gdpr.consenso_at || new Date().toISOString(),
         stato: "inviata",
       })
       .select()

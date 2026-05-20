@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import type { ValidatedBillData } from "@/lib/extraction/validation";
 import jsPDF from "jspdf";
 
-type Step = "upload" | "processing" | "confirm" | "proposal";
+type Step = "upload" | "processing" | "confirm" | "contact" | "proposal";
 
 export default function Home() {
   const [step, setStep] = useState<Step>("upload");
@@ -41,7 +41,11 @@ export default function Home() {
     cognome: string;
   } | null>(null);
   const [saving, setSaving] = useState(false);
-  const [userEmail, setUserEmail] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [consensoTrattamento, setConsensoTrattamento] = useState(false);
+  const [consensoMarketing, setConsensoMarketing] = useState(false);
+  const [consensoProfilazione, setConsensoProfilazione] = useState(false);
 
   const handleUpload = useCallback(async (f: File) => {
     setFile(f);
@@ -84,7 +88,8 @@ export default function Home() {
       setExtractedData(result.data);
       setEditedData(result.data);
       setStoragePath(result.storagePath);
-      setUserEmail(result.data.cliente?.email_contatto_bolletta || "");
+      setContactEmail(result.data.cliente?.email_contatto_bolletta || "");
+      setContactPhone(result.data.cliente?.telefono || "");
       setStep("confirm");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Errore durante l'upload");
@@ -104,7 +109,16 @@ export default function Home() {
           storagePath,
           fileName: file?.name,
           mimeType: file?.type,
-          userEmail: "",
+          contact: {
+            email: contactEmail || undefined,
+            telefono: contactPhone || undefined,
+          },
+          gdpr: {
+            consenso_trattamento: consensoTrattamento,
+            consenso_marketing: consensoMarketing,
+            consenso_profilazione: consensoProfilazione,
+            consenso_at: consensoTrattamento ? new Date().toISOString() : undefined,
+          },
         }),
       });
       const json = await res.json();
@@ -154,7 +168,7 @@ export default function Home() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
-    doc.text("FornitoreA Luce & Gas", margin, 18);
+    doc.text("Luce & Gas POC", margin, 18);
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
     doc.text(`Proposta personalizzata per ${p.nome} ${p.cognome}`, margin, 30);
@@ -308,7 +322,7 @@ export default function Home() {
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     const footerLines = [
-      "FornitoreA Luce&Gas \u2014 POC dimostrativo interno \u2014 Proposta non vincolante",
+      "Luce&Gas POC \u2014 Dimostrativo interno \u2014 Proposta non vincolante",
       "Codice valido per 30 giorni",
     ];
     footerLines.forEach((line, i) => {
@@ -323,9 +337,8 @@ export default function Home() {
       {/* Header */}
       <header className="bg-[#FF6B00] py-5 px-6 shadow-lg">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <img src="/fornitorea-logo.jpg" alt="FornitoreA Luce & Gas" className="h-10 w-auto rounded" />
           <div>
-            <h1 className="text-white font-bold text-xl leading-tight">FornitoreA Luce & Gas</h1>
+            <h1 className="text-white font-bold text-xl leading-tight">Luce & Gas POC</h1>
             <p className="text-orange-100 text-xs">Scopri quanto puoi risparmiare</p>
           </div>
         </div>
@@ -467,12 +480,117 @@ export default function Home() {
             </div>
 
             <button
-              onClick={handleConfirm}
-              disabled={saving}
-              className="w-full bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-4 rounded-xl transition-all text-lg disabled:opacity-50"
+              onClick={() => setStep("contact")}
+              className="w-full bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-4 rounded-xl transition-all text-lg"
             >
-              {saving ? "Calcolo proposta…" : "Vedi la tua proposta →"}
+              Continua →
             </button>
+          </div>
+        )}
+
+        {/* Step 3b: Contact + GDPR */}
+        {step === "contact" && (
+          <div className="bg-white/10 backdrop-blur rounded-2xl p-8">
+            <h2 className="text-white text-xl font-bold mb-2">
+              I tuoi dati di contatto
+            </h2>
+            <p className="text-gray-300 text-sm mb-6">
+              Per inviarti la proposta personalizzata servono i tuoi recapiti. I dati saranno trattati nel rispetto del GDPR.
+            </p>
+
+            {/* Contatti */}
+            <div className="bg-white/5 rounded-xl p-5 mb-4">
+              <h3 className="text-[#FF6B00] font-semibold mb-3">📧 Recapiti</h3>
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="text-gray-400 text-xs block mb-1">Email *</label>
+                  <input
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="nome@email.it"
+                    className="w-full bg-white/10 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-gray-400 text-xs block mb-1">Telefono</label>
+                  <input
+                    type="tel"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    placeholder="+39 3XX XXX XXXX"
+                    className="w-full bg-white/10 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Consensi GDPR */}
+            <div className="bg-white/5 rounded-xl p-5 mb-6">
+              <h3 className="text-[#FF6B00] font-semibold mb-3">🔒 Privacy e consensi</h3>
+              <div className="space-y-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={consensoTrattamento}
+                    onChange={(e) => setConsensoTrattamento(e.target.checked)}
+                    className="mt-1 w-5 h-5 rounded border-gray-600 bg-white/10 text-[#FF6B00] focus:ring-[#FF6B00] focus:ring-offset-0 flex-shrink-0"
+                  />
+                  <span className="text-white text-sm">
+                    <strong>Trattamento dati *</strong> — Acconsento al trattamento dei miei dati personali per la elaborazione della proposta commerciale, ai sensi dell&apos;art. 6 GDPR. Obbligatorio per procedere.
+                  </span>
+                </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={consensoMarketing}
+                    onChange={(e) => setConsensoMarketing(e.target.checked)}
+                    className="mt-1 w-5 h-5 rounded border-gray-600 bg-white/10 text-[#FF6B00] focus:ring-[#FF6B00] focus:ring-offset-0 flex-shrink-0"
+                  />
+                  <span className="text-gray-300 text-sm">
+                    <strong>Comunicazioni commerciali</strong> — Acconsento a ricevere comunicazioni commerciali su offerte e promozioni, ai sensi dell&apos;art. 7 GDPR. Facoltativo.
+                  </span>
+                </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={consensoProfilazione}
+                    onChange={(e) => setConsensoProfilazione(e.target.checked)}
+                    className="mt-1 w-5 h-5 rounded border-gray-600 bg-white/10 text-[#FF6B00] focus:ring-[#FF6B00] focus:ring-offset-0 flex-shrink-0"
+                  />
+                  <span className="text-gray-300 text-sm">
+                    <strong>Profilazione</strong> — Acconsento alla profilazione dei miei dati per ricevere proposte personalizzate, ai sensi dell&apos;art. 7 GDPR. Facoltativo.
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep("confirm")}
+                className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition-all text-lg border border-white/20"
+              >
+                ← Indietro
+              </button>
+              <button
+                onClick={handleConfirm}
+                disabled={saving || !consensoTrattamento || !contactEmail.trim()}
+                className="flex-2 bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-4 rounded-xl transition-all text-lg disabled:opacity-50"
+              >
+                {saving ? "Calcolo proposta…" : "Vedi la tua proposta →"}
+              </button>
+            </div>
+
+            {!consensoTrattamento && (
+              <p className="text-red-400 text-xs mt-3 text-center">
+                Il consenso al trattamento dei dati è obbligatorio per procedere.
+              </p>
+            )}
+            {!contactEmail.trim() && (
+              <p className="text-red-400 text-xs mt-1 text-center">
+                L&apos;indirizzo email è obbligatorio.
+              </p>
+            )}
           </div>
         )}
 
