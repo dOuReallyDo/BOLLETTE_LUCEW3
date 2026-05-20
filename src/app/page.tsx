@@ -46,6 +46,7 @@ export default function Home() {
   const [consensoTrattamento, setConsensoTrattamento] = useState(false);
   const [consensoMarketing, setConsensoMarketing] = useState(false);
   const [consensoProfilazione, setConsensoProfilazione] = useState(false);
+  const [confirmedDownload, setConfirmedDownload] = useState(false);
 
   const handleUpload = useCallback(async (f: File) => {
     setFile(f);
@@ -715,13 +716,25 @@ export default function Home() {
               <p className="text-gray-500 text-xs mt-2">Valido per 30 giorni — identificativo univoco della tua proposta</p>
             </div>
 
-            {/* Download */}
-            <button
-              onClick={downloadPDF}
-              className="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition-all text-lg border border-white/20 mb-4"
-            >
-              📥 Scarica la proposta
-            </button>
+            {/* Confirm to download */}
+            {!confirmedDownload ? (
+              <button
+                onClick={() => setConfirmedDownload(true)}
+                className="w-full bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-4 rounded-xl transition-all text-lg"
+              >
+                Conferma per scaricare la proposta e essere ricontattato
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-green-400 text-sm text-center">✓ Grazie! La tua richiesta è stata registrata.</p>
+                <button
+                  onClick={downloadPDF}
+                  className="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition-all text-lg border border-white/20"
+                >
+                  📥 Scarica la proposta in PDF
+                </button>
+              </div>
+            )}
           </div>
         )}
       </main>
