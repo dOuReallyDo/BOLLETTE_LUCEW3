@@ -130,6 +130,24 @@ export interface DocumentoOriginale {
   uploaded_at: string;
 }
 
+// Offerte FornitoreA (mirrors Supabase "offerte" table)
+export interface Offerta {
+  id: string;
+  nome_offerta: string;
+  commodity: "gas" | "luce";
+  tipo_prezzo: "fisso" | "variabile" | "tutela";
+  indice_riferimento?: string;
+  prezzo_energia_desc?: string;
+  spread_desc?: string;
+  ccv_annuo?: number;
+  ccv_mensile?: number;
+  iva_inclusa: boolean;
+  note?: string;
+  codice_offerta?: string;
+  attivo: boolean;
+  created_at: string;
+}
+
 // LLM extraction output schema
 export interface ExtractedBillData {
   cliente: {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/client";
 import { extractedBillDataSchema, type ValidatedBillData } from "@/lib/extraction/validation";
 import { generateRedemptionCode } from "@/lib/email/proposal";
+import { findBestOfferta, computeMonthlyBillAmount, computeMonthlyConsumption } from "@/lib/offerte/matching";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest) {
         unita_consumo: validated.bolletta.unita_consumo || null,
         consumo_annuo: validated.bolletta.consumo_annuo || null,
         totale_bolletta: validated.bolletta.totale_bolletta || null,
-        totale_da_pagare: validated.bolletta.totale_da_pagare,
+        totale_da_pagare: validated.bolletta.totale_da_pagare || null,
         data_scadenza_pagamento: validated.bolletta.data_scadenza_pagamento || null,
         stato_pagamenti: validated.bolletta.stato_pagamenti || null,
       })
@@ -143,29 +144,78 @@ export async function POST(req: NextRequest) {
       hash_sha256: hash,
     });
 
-    // 9. Generate proposal (no email — shown directly on screen)
+    // ── 9. Find best FornitoreA offerta and compute proposal ──────────────
+    const commodity = validated.fornitura.tipo_fornitura; // "luce" | "gas"
+    const totaleDaPagare = validated.bolletta.totale_da_pagare || 0;
+    const costoMensileCorrente = computeMonthlyBillAmount(
+      totaleDaPagare,
+      validated.bolletta.periodo_dal,
+      validated.bolletta.periodo_al
+    );
+    const consumoMensile = computeMonthlyConsumption(
+      validated.bolletta.consumo_annuo,
+      validated.bolletta.consumo_fatturato,
+      validated.bolletta.periodo_dal,
+      validated.bolletta.periodo_al
+    );
+
+    const matched = await findBestOfferta(
+      commodity,
+      consumoMensile,
+      costoMensileCorrente,
+      validated.contratto.tipo_prezzo
+    );
+
+    let prezzoProposto: number;
+    let risparmioStimato: number;
+    let offertaProposta: Record<string, unknown>;
+
+    if (matched) {
+      // Use real offerta data from DB
+      prezzoProposto = matched.costo_mensile_stimato;
+      risparmioStimato = matched.risparmio_mensile;
+      offertaProposta = {
+        nome: matched.offerta.nome_offerta,
+        tipo: commodity === "luce" ? "energia" : "gas",
+        prezzo_corrente: costoMensileCorrente,
+        prezzo_proposto: matched.costo_mensile_stimato,
+        risparmio_mensile: matched.risparmio_mensile,
+        fornitore_attuale: validated.contratto.brand_commerciale || validated.contratto.societa_vendita || "",
+        offerta_attuale: validated.contratto.nome_offerta || "",
+        tipo_prezzo: matched.offerta.tipo_prezzo,
+        indice_riferimento: matched.offerta.indice_riferimento || null,
+        ccv_mensile: matched.offerta.ccv_mensile || null,
+        dettagli_costo: matched.dettagli,
+        codice_offerta_w3: matched.offerta.codice_offerta || null,
+      };
+    } else {
+      // Fallback: flat 15% discount
+      risparmioStimato = Math.round(costoMensileCorrente * 0.15 * 100) / 100;
+      prezzoProposto = Math.round((costoMensileCorrente - risparmioStimato) * 100) / 100;
+      offertaProposta = {
+        nome: "FornitoreA Luce&Gas Per Te",
+        tipo: commodity === "luce" ? "energia" : "gas",
+        prezzo_corrente: costoMensileCorrente,
+        prezzo_proposto: prezzoProposto,
+        risparmio_mensile: risparmioStimato,
+        fornitore_attuale: validated.contratto.brand_commerciale || validated.contratto.societa_vendita || "",
+        offerta_attuale: validated.contratto.nome_offerta || "",
+      };
+    }
+
+    // 10. Generate proposal
     const redemptionCode = generateRedemptionCode();
-    const prezzoCorrente = validated.bolletta.totale_da_pagare || 0;
-    const risparmioStimato = Math.round(prezzoCorrente * 0.15 * 100) / 100;
-    const prezzoProposto = Math.round((prezzoCorrente - risparmioStimato) * 100) / 100;
 
     const { data: proposta, error: propErr } = await supabaseAdmin
       .from("proposte_offerta")
       .insert({
         codice_fiscale: validated.cliente.codice_fiscale,
         codice_redenzione: redemptionCode,
-        offerta_proposta: {
-          nome: "FornitoreA Luce&Gas Per Te",
-          tipo: validated.fornitura.tipo_fornitura === "luce" ? "energia" : "gas",
-          prezzo_corrente: prezzoCorrente,
-          prezzo_proposto: prezzoProposto,
-          fornitore_attuale: validated.contratto.brand_commerciale || validated.contratto.societa_vendita,
-          offerta_attuale: validated.contratto.nome_offerta,
-        },
+        offerta_proposta: offertaProposta,
         prezzo_proposto: prezzoProposto,
         risparmio_stimato: risparmioStimato,
         email_inviata_a: userEmail || validated.cliente.email_contatto_bolletta || null,
-        stato: "inviata", // kept for DB consistency
+        stato: "inviata",
       })
       .select()
       .single();
@@ -174,7 +224,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Proposta: ${propErr.message}` }, { status: 500 });
     }
 
-    // Return proposal data directly (no email)
+    // Return proposal data
     return NextResponse.json({
       success: true,
       codice_fiscale: validated.cliente.codice_fiscale,
@@ -183,16 +233,20 @@ export async function POST(req: NextRequest) {
       proposal: {
         codice_fiscale: validated.cliente.codice_fiscale,
         codice_redenzione: redemptionCode,
-        prezzo_corrente: prezzoCorrente,
+        prezzo_corrente: costoMensileCorrente,
         prezzo_proposto: prezzoProposto,
         risparmio_stimato: risparmioStimato,
         nome: validated.cliente.nome,
         cognome: validated.cliente.cognome,
         offerta: {
-          nome: "FornitoreA Luce&Gas Per Te",
-          tipo: validated.fornitura.tipo_fornitura === "luce" ? "energia" : "gas",
+          nome: (offertaProposta.nome as string) || "FornitoreA Luce&Gas Per Te",
+          tipo: commodity === "luce" ? "energia" : "gas",
           fornitore_attuale: validated.contratto.brand_commerciale || validated.contratto.societa_vendita || "",
           offerta_attuale: validated.contratto.nome_offerta || "",
+          tipo_prezzo: matched?.offerta.tipo_prezzo || null,
+          indice_riferimento: matched?.offerta.indice_riferimento || null,
+          ccv_mensile: matched?.offerta.ccv_mensile || null,
+          dettagli_costo: matched?.dettagli || null,
         },
       },
     });

@@ -10,8 +10,19 @@ interface Proposal {
     tipo: string;
     prezzo_corrente: number;
     prezzo_proposto: number;
+    risparmio_mensile?: number;
     fornitore_attuale: string;
     offerta_attuale: string;
+    tipo_prezzo?: string;
+    indice_riferimento?: string;
+    ccv_mensile?: number;
+    dettagli_costo?: {
+      prezzo_energia_mensile: number;
+      ccv_mensile: number;
+      trasporto_mensile: number;
+      oneri_mensile: number;
+      iva_totale: number;
+    };
   };
   prezzo_proposto: number;
   risparmio_stimato: number;
@@ -161,13 +172,31 @@ export default function ProposalPage() {
             </div>
 
             {/* Offer details */}
-            <div className="bg-white/5 rounded-xl p-5 mb-8">
+            <div className="bg-white/5 rounded-xl p-5 mb-6">
               <h3 className="text-white font-semibold mb-3">Dettagli offerta</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Offerta</span>
-                  <span className="text-white">{proposal.offerta_proposta.nome}</span>
+                  <span className="text-white font-semibold">{proposal.offerta_proposta.nome}</span>
                 </div>
+                {proposal.offerta_proposta.tipo_prezzo && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Prezzo</span>
+                    <span className="text-white capitalize">{proposal.offerta_proposta.tipo_prezzo}</span>
+                  </div>
+                )}
+                {proposal.offerta_proposta.indice_riferimento && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Indice</span>
+                    <span className="text-white">{proposal.offerta_proposta.indice_riferimento}</span>
+                  </div>
+                )}
+                {proposal.offerta_proposta.ccv_mensile != null && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">CCV mensile</span>
+                    <span className="text-white">€{proposal.offerta_proposta.ccv_mensile.toFixed(2)}/mese</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-gray-400">Tipo fornitura</span>
                   <span className="text-white">{proposal.offerta_proposta.tipo}</span>
@@ -178,6 +207,39 @@ export default function ProposalPage() {
                 </div>
               </div>
             </div>
+
+            {/* Cost breakdown */}
+            {proposal.offerta_proposta.dettagli_costo && (
+              <div className="bg-white/5 rounded-xl p-5 mb-6">
+                <h3 className="text-white font-semibold mb-3">Dettaglio costi stimati</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Quota energia</span>
+                    <span className="text-white">€{proposal.offerta_proposta.dettagli_costo.prezzo_energia_mensile.toFixed(2)}/mese</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">CCV (commercializzazione)</span>
+                    <span className="text-white">€{proposal.offerta_proposta.dettagli_costo.ccv_mensile.toFixed(2)}/mese</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Trasporto e gestione</span>
+                    <span className="text-white">€{proposal.offerta_proposta.dettagli_costo.trasporto_mensile.toFixed(2)}/mese</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Oneri di sistema</span>
+                    <span className="text-white">€{proposal.offerta_proposta.dettagli_costo.oneri_mensile.toFixed(2)}/mese</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">IVA</span>
+                    <span className="text-white">€{proposal.offerta_proposta.dettagli_costo.iva_totale.toFixed(2)}/mese</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-white/10">
+                    <span className="text-white font-semibold">Totale stimato</span>
+                    <span className="text-green-400 font-bold text-lg">€{proposal.prezzo_proposto.toFixed(2)}/mese</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <button
               onClick={handleAccept}

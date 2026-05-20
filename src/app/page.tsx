@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import type { ValidatedBillData } from "@/lib/extraction/validation";
+import jsPDF from "jspdf";
 
 type Step = "upload" | "processing" | "confirm" | "proposal";
 
@@ -13,6 +14,7 @@ export default function Home() {
   const [storagePath, setStoragePath] = useState("");
   const [error, setError] = useState("");
   const [dragActive, setDragActive] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [proposal, setProposal] = useState<{
     codice_fiscale: string;
     codice_redenzione: string;
@@ -24,40 +26,71 @@ export default function Home() {
       tipo: string;
       fornitore_attuale: string;
       offerta_attuale: string;
+      tipo_prezzo?: string | null;
+      indice_riferimento?: string | null;
+      ccv_mensile?: number | null;
+      dettagli_costo?: {
+        prezzo_energia_mensile: number;
+        ccv_mensile: number;
+        trasporto_mensile: number;
+        oneri_mensile: number;
+        iva_totale: number;
+      } | null;
     };
     nome: string;
     cognome: string;
   } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
 
   const handleUpload = useCallback(async (f: File) => {
     setFile(f);
     setStep("processing");
     setError("");
+    setUploadProgress(0);
 
     const formData = new FormData();
     formData.append("file", f);
 
     try {
-      const res = await fetch("/api/extract", { method: "POST", body: formData });
-      const json = await res.json();
+      const xhr = new XMLHttpRequest();
 
-      if (!res.ok) {
-        setError(json.error || "Errore durante l'estrazione");
-        setStep("upload");
-        return;
-      }
+      const result = await new Promise<{ data: ValidatedBillData; storagePath: string; fileName: string; mimeType: string }>((resolve, reject) => {
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            setUploadProgress(pct);
+          }
+        });
 
-      setExtractedData(json.data);
-      setEditedData(json.data);
-      setStoragePath(json.storagePath);
+        xhr.addEventListener("load", () => {
+          try {
+            const json = JSON.parse(xhr.responseText);
+            if (xhr.status >= 400) {
+              reject(new Error(json.error || "Errore durante l'estrazione"));
+            } else {
+              resolve(json);
+            }
+          } catch {
+            reject(new Error("Risposta non valida dal server"));
+          }
+        });
+
+        xhr.addEventListener("error", () => reject(new Error("Errore di connessione")));
+        xhr.open("POST", "/api/extract");
+        xhr.send(formData);
+      });
+
+      setExtractedData(result.data);
+      setEditedData(result.data);
+      setStoragePath(result.storagePath);
+      setUserEmail(result.data.cliente?.email_contatto_bolletta || "");
       setStep("confirm");
-    } catch {
-      setError("Errore di connessione");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Errore durante l'upload");
       setStep("upload");
     }
   }, []);
-
   const handleConfirm = async () => {
     setSaving(true);
     setError("");
@@ -392,8 +425,26 @@ export default function Home() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Offerta</span>
-                  <span className="text-white">{proposal.offerta.nome}</span>
+                  <span className="text-white font-semibold">{proposal.offerta.nome}</span>
                 </div>
+                {proposal.offerta.tipo_prezzo && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Prezzo</span>
+                    <span className="text-white capitalize">{proposal.offerta.tipo_prezzo}</span>
+                  </div>
+                )}
+                {proposal.offerta.indice_riferimento && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Indice</span>
+                    <span className="text-white">{proposal.offerta.indice_riferimento}</span>
+                  </div>
+                )}
+                {proposal.offerta.ccv_mensile != null && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">CCV mensile</span>
+                    <span className="text-white">€{proposal.offerta.ccv_mensile.toFixed(2)}/mese</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-gray-400">Tipo fornitura</span>
                   <span className="text-white">{proposal.offerta.tipo === "luce" ? "Energia elettrica" : "Gas naturale"}</span>
@@ -408,6 +459,39 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
+            {/* Cost breakdown */}
+            {proposal.offerta.dettagli_costo && (
+              <div className="bg-white/5 rounded-xl p-5 mb-6">
+                <h3 className="text-white font-semibold mb-3">Dettaglio costi stimati</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Quota energia</span>
+                    <span className="text-white">€{proposal.offerta.dettagli_costo.prezzo_energia_mensile.toFixed(2)}/mese</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">CCV (commercializzazione)</span>
+                    <span className="text-white">€{proposal.offerta.dettagli_costo.ccv_mensile.toFixed(2)}/mese</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Trasporto e gestione</span>
+                    <span className="text-white">€{proposal.offerta.dettagli_costo.trasporto_mensile.toFixed(2)}/mese</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Oneri di sistema</span>
+                    <span className="text-white">€{proposal.offerta.dettagli_costo.oneri_mensile.toFixed(2)}/mese</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">IVA</span>
+                    <span className="text-white">€{proposal.offerta.dettagli_costo.iva_totale.toFixed(2)}/mese</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-white/10">
+                    <span className="text-white font-semibold">Totale stimato</span>
+                    <span className="text-green-400 font-bold text-lg">€{proposal.prezzo_proposto.toFixed(2)}/mese</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Personal code */}
             <div className="bg-[#1a1a2e] border border-white/20 rounded-xl p-6 text-center mb-8">
