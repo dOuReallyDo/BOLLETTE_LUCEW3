@@ -130,20 +130,38 @@ export interface DocumentoOriginale {
   uploaded_at: string;
 }
 
-// Offerte FornitoreA (mirrors Supabase "offerte" table)
+// Offerte FornitoreA (mirrors Supabase "offerte" table — v2 from Excel May 2026)
 export interface Offerta {
   id: string;
+  codice_offerta: string;
   nome_offerta: string;
   commodity: "gas" | "luce";
+  tipo_uso: string;
+  durata_mesi: number;
+  data_inizio_commerc?: string;
+  data_fine_commerc?: string;
+  segmento?: string;
+  bolletta_web?: string;
+  domiciliazione?: string;
+  green: boolean;
+  co2: boolean;
+  // Luce
+  comp_ee?: string;                    // "PUN" or null
+  corr_var_lordo_eur_kwh?: number;      // spread €/kWh
+  contrib_mese_no_iva_luce?: number;    // CCV mensile luce
+  contrib_anno_no_iva_luce?: number;    // CCV annuo luce
+  sconto_mese_luce?: number;            // sconto multiservice €/mese
+  // Gas
+  comp_gas?: string;                    // "PSV" or null
+  corr_var_eur_smc?: number;            // spread €/Smc
+  contrib_mese_no_iva_gas?: number;     // CCV mensile gas
+  contrib_anno_no_iva_gas?: number;     // CCV annuo gas
+  sconto_mese_gas?: number;             // sconto multiservice €/mese
+  // Derived for matching
   tipo_prezzo: "fisso" | "variabile" | "tutela";
-  indice_riferimento?: string;
-  prezzo_energia_desc?: string;
-  spread_desc?: string;
-  ccv_annuo?: number;
+  indice_riferimento?: string;          // PUN / PSV
   ccv_mensile?: number;
-  iva_inclusa: boolean;
-  note?: string;
-  codice_offerta?: string;
+  ccv_annuo?: number;
   attivo: boolean;
   created_at: string;
 }

@@ -1,36 +1,34 @@
 /**
- * BillScan POC — Offerta matching & cost estimation
+ * BillScan POC — Offerta matching & cost estimation (v2 — Excel May 2026)
  *
  * Logic:
  * 1. Query Supabase "offerte" table filtered by commodity (gas/luce) and attivo=true
  * 2. Pick the best matching offerta based on the user's current contract type
- * 3. Estimate the monthly cost of the proposed offerta using the bill's consumption data
- * 4. Compare with the current monthly cost to compute savings
+ * 3. Estimate the monthly cost using real spread/CCV from the offerta
+ * 4. Apply sconto multiservice if present
+ * 5. Compare with the current monthly cost to compute savings
  */
 
 import { supabaseAdmin } from "@/lib/supabase/client";
 import type { Offerta } from "@/lib/types/schema";
 
 // ── Reference prices (ARERA PUN/PSV monthly averages for estimation) ──────
-// For variable-price offers we need an estimate of the energy commodity cost.
-// These are monthly averages that we'll use as reasonable estimates.
+// These are the commodity indices used in variable-price offers.
 // Updated periodically from ARERA/GME data.
 const PUN_MENSILE_KWH = 0.125; // ~€/kWh average PUN (electricity)
-const PSV_MENSILE_SMC = 0.45; // ~€/Smc average PSV (gas)
+const PSV_MENSILE_SMC = 0.45;  // ~€/Smc average PSV (gas)
 
 // ── Quota trasporto & gestione (ARERA) ─────────────────────────────────────
-// These are regulated costs that apply regardless of supplier.
-// Simplified averages for domestic customers.
 const TRASPORTO_GESTIONE_LUCE_KWH = 0.028; // €/kWh
 const TRASPORTO_GESTIONE_GAS_SMC = 0.042; // €/Smc
 
 // ── Quota oneri di sistema ─────────────────────────────────────────────────
 const ONERI_LUCE_KWH = 0.035; // €/kWh (approximate for domestic)
-const ONERI_GAS_SMC = 0.007; // €/Smc
+const ONERI_GAS_SMC = 0.007;  // €/Smc
 
 // ── VAT ──────────────────────────────────────────────────────────────────────
 const IVA_ENERGIA = 0.10; // 10% on energy for domestic
-const IVA_ALTRI = 0.22; // 22% on transport/oneri for domestic
+const IVA_ALTRI = 0.22;   // 22% on transport/oneri for domestic
 
 export interface MatchedOfferta {
   offerta: Offerta;
@@ -49,12 +47,13 @@ export interface MatchedOfferta {
  * Find the best FornitoreA offerta for a given bill and estimate savings.
  *
  * Strategy:
- * - If the user is on a "tutela" contract → offer a PLACET (transitional) or mercato libero
- * - If the user is on a "variabile" contract → offer a "fisso" or better "variabile" (lower spread)
- * - If the user is on a "fisso" contract → offer a "variabile" or competitive "fisso"
+ * - If the user is on a "tutela" contract → offer a PLACET or mercato libero
+ * - If the user is on a "variabile" contract → prefer an offer with lower spread
+ * - If the user is on a "fisso" contract → offer a "variabile" (typically cheaper)
  * - Always prefer the offer that gives the highest savings
+ * - Prefer multiservice discounts (sconto_mese) when available
  *
- * Falls back to the flat 15% discount if no matching offer is found.
+ * Falls back to the cheapest offer if no savings found.
  */
 export async function findBestOfferta(
   commodity: "luce" | "gas",
@@ -70,7 +69,6 @@ export async function findBestOfferta(
     .eq("attivo", true);
 
   if (error || !offerte || offerte.length === 0) {
-    // Fallback: flat 15% discount
     return null;
   }
 
@@ -86,45 +84,55 @@ export async function findBestOfferta(
     };
   });
 
-  // 3. Pick the best offer: highest savings, with tiebreaker on lower cost
-  // But: if the user is already on the SAME offer, skip it
+  // 3. Sort by savings desc, then by lowest cost
+  // Prefer multiservice (sconto_mese) as tiebreaker
   const eligible = candidates.filter(
     (c) => c.risparmio_mensile > 0 || c.costo_mensile_stimato <= totaleMensileCorrente
   );
 
-  if (eligible.length === 0) {
-    // All offers are more expensive — pick the cheapest one anyway
-    candidates.sort((a, b) => a.costo_mensile_stimato - b.costo_mensile_stimato);
-    const cheapest = candidates[0];
-    cheapest.risparmio_mensile = Math.max(
-      0,
-      totaleMensileCorrente - cheapest.costo_mensile_stimato
-    );
-    return cheapest;
-  }
+  const pool = eligible.length > 0 ? eligible : candidates;
 
-  eligible.sort((a, b) => {
+  pool.sort((a, b) => {
     if (b.risparmio_mensile !== a.risparmio_mensile) {
       return b.risparmio_mensile - a.risparmio_mensile;
     }
+    // Tiebreaker: prefer offers with multiservice discount
+    const scontoA = getMonthlyDiscount(a.offerta) || 0;
+    const scontoB = getMonthlyDiscount(b.offerta) || 0;
+    if (scontoB !== scontoA) return scontoB - scontoA;
     return a.costo_mensile_stimato - b.costo_mensile_stimato;
   });
 
-  return eligible[0];
+  const best = pool[0];
+  // Recalculate savings if all offers are more expensive
+  if (eligible.length === 0) {
+    best.risparmio_mensile = Math.max(0, totaleMensileCorrente - best.costo_mensile_stimato);
+  }
+
+  return best;
+}
+
+/**
+ * Get the monthly discount (sconto multiservice) for an offerta.
+ */
+function getMonthlyDiscount(offerta: Offerta): number | null {
+  if (offerta.commodity === "luce") return offerta.sconto_mese_luce ?? null;
+  return offerta.sconto_mese_gas ?? null;
 }
 
 /**
  * Estimate the monthly cost for a given offerta and consumption level.
  *
+ * Uses real spread from the offerta data (corr_var_lordo_eur_kwh / corr_var_eur_smc)
+ * and real CCV (ccv_mensile from the offerte table).
+ *
  * Structure of an Italian energy bill (simplified):
- *   1. Quota energia (commodity price × consumo + CCV)
+ *   1. Quota energia (PUN/PSV + spread × consumo + CCV)
  *   2. Quota trasporto e gestione contatore (ARERA regulated)
  *   3. Quota oneri di sistema (ARERA regulated)
  *   4. Imposte (accise)
  *   5. IVA
- *
- * For PLACET/tutela offers, the energy price is defined by ARERA (PUN/PSV + spread).
- * For fixed offers, we use the energy price description from the offerta.
+ *   6. Sconto multiservice (se presente)
  */
 function estimateMonthlyCost(
   offerta: Offerta,
@@ -137,24 +145,17 @@ function estimateMonthlyCost(
   // ── 1. Quota energia ──────────────────────────────────────
   let prezzoEnergiaPerUnita: number;
 
-  switch (offerta.tipo_prezzo) {
-    case "variabile":
-      prezzoEnergiaPerUnita = isLuce ? PUN_MENSILE_KWH : PSV_MENSILE_SMC;
-      break;
-    case "tutela":
-      // Tutela prices ≈ variable prices (CMEM for gas, PUN for electricity)
-      prezzoEnergiaPerUnita = isLuce ? PUN_MENSILE_KWH : PSV_MENSILE_SMC;
-      break;
-    case "fisso":
-      // For fixed offers, the energy price is embedded in the CCV description
-      // We don't have an explicit per-unit price, so we estimate from CCV
-      // For now, we use a slight premium over variable as a reasonable estimate
-      prezzoEnergiaPerUnita = isLuce
-        ? PUN_MENSILE_KWH * 1.05 // ~5% premium for price certainty
-        : PSV_MENSILE_SMC * 1.05;
-      break;
-    default:
-      prezzoEnergiaPerUnita = isLuce ? PUN_MENSILE_KWH : PSV_MENSILE_SMC;
+  if (offerta.tipo_prezzo === "fisso") {
+    // For fixed offers, use a slight premium over variable
+    prezzoEnergiaPerUnita = isLuce
+      ? PUN_MENSILE_KWH * 1.05
+      : PSV_MENSILE_SMC * 1.05;
+  } else {
+    // variabile or tutela: PUN/PSV + real spread from offerta
+    const spread = isLuce
+      ? (offerta.corr_var_lordo_eur_kwh ?? 0)
+      : (offerta.corr_var_eur_smc ?? 0);
+    prezzoEnergiaPerUnita = (isLuce ? PUN_MENSILE_KWH : PSV_MENSILE_SMC) + spread;
   }
 
   const prezzoEnergiaMensile = prezzoEnergiaPerUnita * consumption;
@@ -184,16 +185,20 @@ function estimateMonthlyCost(
   const ivaAltri = imponibileAltri * IVA_ALTRI;
   const ivaTotale = ivaEnergia + ivaAltri;
 
+  // ── 7. Sconto multiservice ──────────────────────────────────
+  const scontoMultiservice = getMonthlyDiscount(offerta) ?? 0;
+
   const costoMensile =
     prezzoEnergiaMensile +
     ccvMensile +
     trasportoMensile +
     oneriMensile +
     accisaMensile +
-    ivaTotale;
+    ivaTotale -
+    scontoMultiservice;
 
   return {
-    costo_mensile_stimato: Math.round(costoMensile * 100) / 100,
+    costo_mensile_stimato: Math.max(0, Math.round(costoMensile * 100) / 100),
     dettagli: {
       prezzo_energia_mensile: Math.round(prezzoEnergiaMensile * 100) / 100,
       ccv_mensile: Math.round(ccvMensile * 100) / 100,
