@@ -40,7 +40,9 @@ export interface MatchedOfferta {
     sconto_mese: number;
     trasporto_mensile: number;
     oneri_mensile: number;
+    accise_mensile: number;
     iva_totale: number;
+    totale_calcolato: number;
   };
 }
 
@@ -206,7 +208,9 @@ function estimateMonthlyCost(
       sconto_mese: Math.round(scontoMultiservice * 100) / 100,
       trasporto_mensile: Math.round(trasportoMensile * 100) / 100,
       oneri_mensile: Math.round(oneriMensile * 100) / 100,
+      accise_mensile: Math.round(accisaMensile * 100) / 100,
       iva_totale: Math.round(ivaTotale * 100) / 100,
+      totale_calcolato: Math.max(0, Math.round(costoMensile * 100) / 100),
     },
   };
 }

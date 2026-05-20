@@ -36,7 +36,9 @@ export default function Home() {
         sconto_mese: number;
         trasporto_mensile: number;
         oneri_mensile: number;
+        accise_mensile: number;
         iva_totale: number;
+        totale_calcolato: number;
       } | null;
     };
     nome: string;
@@ -299,6 +301,7 @@ export default function Home() {
       costRows.push(
         ["Trasporto e gestione", `\u20AC${dc.trasporto_mensile.toFixed(2)}/mese`],
         ["Oneri di sistema", `\u20AC${dc.oneri_mensile.toFixed(2)}/mese`],
+        ["Accise", `\u20AC${dc.accise_mensile.toFixed(2)}/mese`],
         ["IVA", `\u20AC${dc.iva_totale.toFixed(2)}/mese`],
       );
 
@@ -323,7 +326,7 @@ export default function Home() {
       doc.setTextColor(26, 26, 46);
       doc.text("Totale stimato", margin, y);
       doc.setTextColor(22, 163, 74);
-      doc.text(`\u20AC${p.prezzo_proposto.toFixed(2)}/mese`, margin + contentW, y, { align: "right" });
+      doc.text(`\u20AC${dc.totale_calcolato.toFixed(2)}/mese`, margin + contentW, y, { align: "right" });
       y += 10;
     }
 
@@ -729,12 +732,16 @@ export default function Home() {
                     <span className="text-white">€{proposal.offerta.dettagli_costo.oneri_mensile.toFixed(2)}/mese</span>
                   </div>
                   <div className="flex justify-between">
+                    <span className="text-gray-400">Accise</span>
+                    <span className="text-white">€{proposal.offerta.dettagli_costo.accise_mensile.toFixed(2)}/mese</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-gray-400">IVA</span>
                     <span className="text-white">€{proposal.offerta.dettagli_costo.iva_totale.toFixed(2)}/mese</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t border-white/10">
                     <span className="text-white font-semibold">Totale stimato</span>
-                    <span className="text-green-400 font-bold text-lg">€{proposal.prezzo_proposto.toFixed(2)}/mese</span>
+                    <span className="text-green-400 font-bold text-lg">€{proposal.offerta.dettagli_costo.totale_calcolato.toFixed(2)}/mese</span>
                   </div>
                 </div>
               </div>

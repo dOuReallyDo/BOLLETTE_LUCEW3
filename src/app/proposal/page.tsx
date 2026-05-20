@@ -23,7 +23,9 @@ interface Proposal {
       sconto_mese: number;
       trasporto_mensile: number;
       oneri_mensile: number;
+      accise_mensile: number;
       iva_totale: number;
+      totale_calcolato: number;
     };
   };
   prezzo_proposto: number;
@@ -243,12 +245,16 @@ export default function ProposalPage() {
                     <span className="text-white">€{proposal.offerta_proposta.dettagli_costo.oneri_mensile.toFixed(2)}/mese</span>
                   </div>
                   <div className="flex justify-between">
+                    <span className="text-gray-400">Accise</span>
+                    <span className="text-white">€{proposal.offerta_proposta.dettagli_costo.accise_mensile.toFixed(2)}/mese</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-gray-400">IVA</span>
                     <span className="text-white">€{proposal.offerta_proposta.dettagli_costo.iva_totale.toFixed(2)}/mese</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t border-white/10">
                     <span className="text-white font-semibold">Totale stimato</span>
-                    <span className="text-green-400 font-bold text-lg">€{proposal.prezzo_proposto.toFixed(2)}/mese</span>
+                    <span className="text-green-400 font-bold text-lg">€{proposal.offerta_proposta.dettagli_costo.totale_calcolato.toFixed(2)}/mese</span>
                   </div>
                 </div>
               </div>
