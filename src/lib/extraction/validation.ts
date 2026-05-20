@@ -28,7 +28,11 @@ const fornituraSchema = z.object({
   codice_remi: nullableString,
   pcs: nullableNumber,
   coeff_correttivo_c: nullableNumber,
-});
+}).transform((data) => ({
+  ...data,
+  // POD = luce, PDR = gas — override LLM to avoid misclassification
+  tipo_fornitura: data.tipo_punto === "POD" ? "luce" as const : "gas" as const,
+}));
 
 const contrattoSchema = z.object({
   brand_commerciale: nullableString,
