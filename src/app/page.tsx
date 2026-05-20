@@ -142,85 +142,180 @@ export default function Home() {
     const d = editedData;
     const tipo = d.fornitura.tipo_fornitura === "luce" ? "Energia Elettrica" : "Gas Naturale";
 
-    const html = `
-<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Proposta FornitoreA Luce & Gas</title>
-<style>
-  body { font-family: Arial, sans-serif; margin: 40px; color: #1a1a2e; }
-  .header { background: linear-gradient(135deg, #FF6B00, #FF8C42); color: white; padding: 30px; border-radius: 12px; margin-bottom: 30px; text-align: center; }
-  .header h1 { margin: 0; font-size: 24px; }
-  .header p { margin: 5px 0 0; opacity: 0.9; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-  .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; }
-  .card.oggi { background: #fef2f2; border-color: #fca5a5; }
-  .card.fornitorea { background: #f0fdf4; border-color: #86efac; }
-  .card h3 { margin: 0 0 10px; font-size: 14px; }
-  .card .price { font-size: 32px; font-weight: bold; }
-  .card.oggi .price { color: #dc2626; }
-  .card.fornitorea .price { color: #16a34a; }
-  .savings { background: #fff7ed; border: 2px solid #FF6B00; border-radius: 8px; padding: 25px; text-align: center; margin-bottom: 30px; }
-  .savings .amount { font-size: 48px; font-weight: bold; color: #FF6B00; }
-  .savings .label { font-size: 16px; color: #666; }
-  .details { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 30px; }
-  .details h3 { margin: 0 0 15px; }
-  .details table { width: 100%; border-collapse: collapse; }
-  .details td { padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
-  .details td:first-child { color: #6b7280; width: 50%; }
-  .details td:last-child { font-weight: 500; text-align: right; }
-  .code { background: #1a1a2e; color: white; text-align: center; padding: 20px; border-radius: 8px; margin-top: 30px; }
-  .code .label { font-size: 12px; opacity: 0.7; margin-bottom: 5px; }
-  .code .value { font-size: 32px; font-weight: bold; letter-spacing: 8px; }
-  .footer { text-align: center; margin-top: 40px; color: #9ca3af; font-size: 11px; }
-  @media print { body { margin: 20px; } }
-</style></head><body>
-  <div class="header">
-    <h1>FornitoreA Luce & Gas</h1>
-    <p>Proposta personalizzata per ${p.nome} ${p.cognome}</p>
-  </div>
-  <div class="grid">
-    <div class="card oggi">
-      <h3>Oggi paghi</h3>
-      <div class="price">&euro;${p.prezzo_corrente.toFixed(2)}/mese</div>
-      <p style="font-size:12px;color:#666">${p.offerta.fornitore_attuale} &mdash; ${p.offerta.offerta_attuale}</p>
-    </div>
-    <div class="card fornitorea">
-      <h3>Con FornitoreA paghi</h3>
-      <div class="price">&euro;${p.prezzo_proposto.toFixed(2)}/mese</div>
-      <p style="font-size:12px;color:#666">${p.offerta.nome}</p>
-    </div>
-  </div>
-  <div class="savings">
-    <div class="label">Risparmio stimato</div>
-    <div class="amount">&euro;${p.risparmio_stimato.toFixed(2)}/mese</div>
-  </div>
-  <div class="details">
-    <h3>Dettagli fornitura</h3>
-    <table>
-      <tr><td>Tipo</td><td>${tipo}</td></tr>
-      <tr><td>POD/PDR</td><td>${d.fornitura.codice_punto}</td></tr>
-      <tr><td>Indirizzo</td><td>${d.fornitura.indirizzo_fornitura || ""}, ${d.fornitura.comune || ""} (${d.fornitura.provincia || ""})</td></tr>
-      <tr><td>Fornitore attuale</td><td>${p.offerta.fornitore_attuale}</td></tr>
-      <tr><td>Offerta attuale</td><td>${p.offerta.offerta_attuale}</td></tr>
-      <tr><td>Consumo annuo</td><td>${d.bolletta.consumo_annuo || ""} ${d.bolletta.unita_consumo || ""}</td></tr>
-    </table>
-  </div>
-  <div class="code">
-    <div class="label">Codice personale della proposta</div>
-    <div class="value">${p.codice_redenzione}</div>
-  </div>
-  <div class="footer">
-    FornitoreA Luce&Gas &mdash; POC dimostrativo interno &mdash; Proposta non vincolante<br>
-    Codice valido per 30 giorni
-  </div>
-</body></html>`;
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 18;
+    const contentW = pageW - margin * 2;
+    let y = 0;
 
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `proposta-fornitorea-${p.codice_redenzione}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
+    // ── Header ──────────────────────────────────────────────
+    doc.setFillColor(255, 107, 0);
+    doc.rect(0, 0, pageW, 38, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("FornitoreA Luce & Gas", margin, 18);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Proposta personalizzata per ${p.nome} ${p.cognome}`, margin, 30);
+    y = 48;
+
+    // ── Confronto costi ─────────────────────────────────────
+    doc.setTextColor(26, 26, 46);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Oggi paghi", margin, y);
+    doc.text("Con FornitoreA paghi", margin + contentW / 2 + 4, y);
+    y += 2;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, y, margin + contentW, y);
+    y += 8;
+
+    // Price cards side by side
+    const cardW = contentW / 2 - 2;
+    // Red card
+    doc.setFillColor(254, 242, 242);
+    doc.roundedRect(margin, y - 3, cardW, 24, 3, 3, "F");
+    doc.setTextColor(220, 38, 38);
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text(`\u20AC${p.prezzo_corrente.toFixed(2)}/mese`, margin + 4, y + 10);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    doc.text(`${p.offerta.fornitore_attuale} \u2014 ${p.offerta.offerta_attuale}`, margin + 4, y + 17);
+
+    // Green card
+    const card2X = margin + cardW + 4;
+    doc.setFillColor(240, 253, 244);
+    doc.roundedRect(card2X, y - 3, cardW, 24, 3, 3, "F");
+    doc.setTextColor(22, 163, 74);
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text(`\u20AC${p.prezzo_proposto.toFixed(2)}/mese`, card2X + 4, y + 10);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    doc.text(p.offerta.nome, card2X + 4, y + 17);
+    y += 28;
+
+    // ── Risparmio ──────────────────────────────────────────
+    doc.setFillColor(255, 247, 237);
+    doc.setDrawColor(255, 107, 0);
+    doc.roundedRect(margin, y, contentW, 22, 3, 3, "FD");
+    doc.setTextColor(255, 107, 0);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Risparmio stimato", pageW / 2, y + 9, { align: "center" });
+    doc.setFontSize(24);
+    doc.text(`\u20AC${p.risparmio_stimato.toFixed(2)}/mese`, pageW / 2, y + 18, { align: "center" });
+    y += 30;
+
+    // ── Dettagli offerta ───────────────────────────────────
+    doc.setTextColor(26, 26, 46);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Dettagli offerta", margin, y);
+    y += 2;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, y, margin + contentW, y);
+    y += 7;
+
+    const detailRows: [string, string][] = [
+      ["Offerta", p.offerta.nome],
+      ["Tipo fornitura", tipo],
+      ["POD/PDR", d.fornitura.codice_punto],
+      ["Indirizzo", `${d.fornitura.indirizzo_fornitura || ""}, ${d.fornitura.comune || ""} (${d.fornitura.provincia || ""})`],
+      ["Fornitore attuale", p.offerta.fornitore_attuale],
+      ["Offerta attuale", p.offerta.offerta_attuale],
+      ["Consumo annuo", `${d.bolletta.consumo_annuo || ""} ${d.bolletta.unita_consumo || ""}`],
+    ];
+    if (p.offerta.tipo_prezzo) detailRows.push(["Prezzo", p.offerta.tipo_prezzo]);
+    if (p.offerta.indice_riferimento) detailRows.push(["Indice", p.offerta.indice_riferimento]);
+    if (p.offerta.ccv_mensile != null) detailRows.push(["CCV mensile", `\u20AC${p.offerta.ccv_mensile.toFixed(2)}/mese`]);
+
+    doc.setFontSize(9);
+    detailRows.forEach(([label, value]) => {
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(107, 114, 128);
+      doc.text(label, margin, y);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(26, 26, 46);
+      doc.text(value, margin + contentW, y, { align: "right" });
+      y += 5.5;
+    });
+    y += 5;
+
+    // ── Dettaglio costi stimati ────────────────────────────
+    if (p.offerta.dettagli_costo) {
+      const dc = p.offerta.dettagli_costo;
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(26, 26, 46);
+      doc.text("Dettaglio costi stimati", margin, y);
+      y += 2;
+      doc.setDrawColor(200, 200, 200);
+      doc.line(margin, y, margin + contentW, y);
+      y += 7;
+
+      const costRows: [string, string][] = [
+        ["Quota energia", `\u20AC${dc.prezzo_energia_mensile.toFixed(2)}/mese`],
+        ["CCV (commercializzazione)", `\u20AC${dc.ccv_mensile.toFixed(2)}/mese`],
+        ["Trasporto e gestione", `\u20AC${dc.trasporto_mensile.toFixed(2)}/mese`],
+        ["Oneri di sistema", `\u20AC${dc.oneri_mensile.toFixed(2)}/mese`],
+        ["IVA", `\u20AC${dc.iva_totale.toFixed(2)}/mese`],
+      ];
+
+      doc.setFontSize(9);
+      costRows.forEach(([label, value]) => {
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(107, 114, 128);
+        doc.text(label, margin, y);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(26, 26, 46);
+        doc.text(value, margin + contentW, y, { align: "right" });
+        y += 5.5;
+      });
+
+      // Total line
+      y += 1;
+      doc.setDrawColor(200, 200, 200);
+      doc.line(margin, y, margin + contentW, y);
+      y += 6;
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(26, 26, 46);
+      doc.text("Totale stimato", margin, y);
+      doc.setTextColor(22, 163, 74);
+      doc.text(`\u20AC${p.prezzo_proposto.toFixed(2)}/mese`, margin + contentW, y, { align: "right" });
+      y += 10;
+    }
+
+    // ── Codice personale ───────────────────────────────────
+    doc.setFillColor(26, 26, 46);
+    doc.roundedRect(margin, y, contentW, 24, 3, 3, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text("Codice personale della proposta", pageW / 2, y + 8, { align: "center" });
+    doc.setFontSize(28);
+    doc.setFont("helvetica", "bold");
+    doc.text(p.codice_redenzione, pageW / 2, y + 19, { align: "center" });
+    y += 34;
+
+    // ── Footer ─────────────────────────────────────────────
+    doc.setTextColor(156, 163, 175);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    const footerLines = [
+      "FornitoreA Luce&Gas \u2014 POC dimostrativo interno \u2014 Proposta non vincolante",
+      "Codice valido per 30 giorni",
+    ];
+    footerLines.forEach((line, i) => {
+      doc.text(line, pageW / 2, y + i * 4.5, { align: "center" });
+    });
+
+    doc.save(`proposta-fornitorea-${p.codice_redenzione}.pdf`);
   };
 
   return (
