@@ -200,6 +200,7 @@ export async function POST(req: NextRequest) {
         prezzo_corrente: costoMensileCorrente,
         prezzo_proposto: matched.costo_mensile_stimato,
         risparmio_mensile: matched.risparmio_mensile,
+        cannot_beat: matched.cannot_beat,
         fornitore_attuale: validated.contratto.brand_commerciale || validated.contratto.societa_vendita || "",
         offerta_attuale: validated.contratto.nome_offerta || "",
         tipo_prezzo: matched.offerta.tipo_prezzo,
@@ -267,6 +268,7 @@ export async function POST(req: NextRequest) {
         offerta: {
           nome: (offertaProposta.nome as string) || "Luce&Gas Per Te",
           tipo: commodity === "luce" ? "energia" : "gas",
+          cannot_beat: !!offertaProposta.cannot_beat,
           fornitore_attuale: validated.contratto.brand_commerciale || validated.contratto.societa_vendita || "",
           offerta_attuale: validated.contratto.nome_offerta || "",
           tipo_prezzo: matched?.offerta.tipo_prezzo || null,

@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import type { ValidatedBillData } from "@/lib/extraction/validation";
 import jsPDF from "jspdf";
 
-type Step = "upload" | "processing" | "confirm" | "contact" | "proposal";
+type Step = "upload" | "processing" | "confirm" | "contact" | "cannot_beat" | "proposal";
 
 export default function Home() {
   const [step, setStep] = useState<Step>("upload");
@@ -24,6 +24,7 @@ export default function Home() {
     offerta: {
       nome: string;
       tipo: string;
+      cannot_beat?: boolean;
       fornitore_attuale: string;
       offerta_attuale: string;
       tipo_prezzo?: string | null;
@@ -148,7 +149,7 @@ export default function Home() {
       }
 
       setProposal(json.proposal);
-      setStep("proposal");
+      setStep(json.proposal.offerta.cannot_beat ? "cannot_beat" : "proposal");
     } catch {
       setError("Errore di connessione");
     } finally {
@@ -619,6 +620,93 @@ export default function Home() {
                 L&apos;indirizzo email è obbligatorio.
               </p>
             )}
+          </div>
+        )}
+
+        {/* Step 3b-5: Cannot Beat — Cortesia + Convergenza */}
+        {step === "cannot_beat" && proposal && editedData && (
+          <div className="bg-white/10 backdrop-blur rounded-2xl p-8 text-center">
+            {/* Trophy emoji */}
+            <div className="text-6xl mb-4">🏆</div>
+
+            <h2 className="text-white text-2xl font-bold mb-3">
+              {proposal.nome}, hai una bolletta d'oro!
+            </h2>
+
+            <p className="text-gray-300 mb-6 leading-relaxed max-w-md mx-auto">
+              Abbiamo fatto i conti, ci siamo arrotolati le maniche, abbiamo tentato ogni spread del catalogo…
+              ma il tuo fornitore attuale ti ha davvero fatto un{' '}
+              <span className="text-[#FF6B00] font-bold">prezzo da campione</span>.
+            </p>
+
+            <div className="bg-[#FF6B00]/10 border border-[#FF6B00]/30 rounded-xl p-5 mb-6 max-w-sm mx-auto">
+              <p className="text-[#FF6B00] text-sm font-semibold mb-1">Il tuo prezzo attuale</p>
+              <p className="text-white text-3xl font-bold">
+                €{proposal.prezzo_corrente.toFixed(2)}/mese
+              </p>
+              <p className="text-gray-400 text-xs mt-1">
+                {proposal.offerta.fornitore_attuale} — {proposal.offerta.offerta_attuale}
+              </p>
+            </div>
+
+            <p className="text-gray-300 mb-6 leading-relaxed max-w-md mx-auto">
+              Sul solo prezzo dell&apos;energia, per dire la verità,{' '}
+              <span className="italic">non riusciamo a batterti</span>. Ma se ti va, possiamo{' '}
+              <span className="text-[#FF6B00] font-semibold">rilanciare con qualcosa di più ricco</span> per te…
+            </p>
+
+            {/* Convergenza — bundle value proposition */}
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6 text-left">
+              <h3 className="text-[#FF6B00] font-semibold mb-3 text-center">⚡ E se ti dicessimo che c&apos;è di più?</h3>
+              <p className="text-gray-300 text-sm mb-4 leading-relaxed">
+                Sulla sola componente energia non possiamo offrirti di meno. Ma il risparmio vero non è solo sul prezzo al kWh — è nel <span className="text-white font-medium">pacchetto totale</span>:
+              </p>
+              <ul className="space-y-3 text-sm text-gray-300">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 text-lg leading-none mt-0.5">✓</span>
+                  <span><span className="text-white font-medium">Sconto multiservice €5,50/mese</span> — se porti anche la linea mobile o la fibra, il risparmio è cumulativo e reale</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 text-lg leading-none mt-0.5">✓</span>
+                  <span><span className="text-white font-medium">Fibra inclusa o a condizioni speciali</span> — connessione veloce senza sorprese in fattura</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 text-lg leading-none mt-0.5">✓</span>
+                  <span><span className="text-white font-medium">App e assistenza FornitoreA</span> — gestisci tutto dal telefono, niente code, niente carte bollate</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 text-lg leading-none mt-0.5">✓</span>
+                  <span><span className="text-white font-medium">Bolletta digitale & trasparenza</span> — niente costi nascosti, tracking consumi in tempo reale</span>
+                </li>
+              </ul>
+              <p className="text-gray-400 text-xs mt-4 text-center italic">
+                Il risparmio non è solo nel prezzo — è nel valore dell&apos;intero pacchetto.
+              </p>
+            </div>
+
+            {/* Irony self-deprecating footer */}
+            <div className="bg-white/5 rounded-xl p-4 mb-8 max-w-md mx-auto">
+              <p className="text-gray-400 text-xs leading-relaxed italic">
+                &ldquo;Sinceramente? Quando il prezzo del competitor è questo, noi festeggiamo per te e ci mettiamo a studiare offerte migliori. Se le cose dovessero cambiare — e nel mercato energia cambiano sempre — saremo i primi a farti sapere che abbiamo qualcosa da urlo.&rdquo;
+              </p>
+              <p className="text-[#FF6B00] text-xs mt-2 font-semibold">— Il team FornitoreA Luce&Gas 🧡</p>
+            </div>
+
+            {/* CTA */}
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => setStep("proposal")}
+                className="w-full bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-4 rounded-xl transition-all text-lg"
+              >
+                Vedere comunque la nostra proposta →
+              </button>
+              <button
+                onClick={() => { setStep("upload"); setError(""); setExtractedData(null); setEditedData(null); setProposal(null); setFile(null); setElapsedSeconds(0); setConfirmedDownload(false); }}
+                className="w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 rounded-xl transition-all border border-white/20"
+              >
+                Torna alla home
+              </button>
+            </div>
           </div>
         )}
 

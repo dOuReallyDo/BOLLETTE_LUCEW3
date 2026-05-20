@@ -34,6 +34,7 @@ export interface MatchedOfferta {
   offerta: Offerta;
   costo_mensile_stimato: number;
   risparmio_mensile: number;
+  cannot_beat: boolean; // true when FornitoreA can't beat the current offer on energy alone
   dettagli: {
     prezzo_energia_mensile: number;
     ccv_mensile: number;
@@ -83,6 +84,7 @@ export async function findBestOfferta(
       offerta,
       costo_mensile_stimato: result.costo_mensile_stimato,
       risparmio_mensile: risparmio,
+      cannot_beat: result.costo_mensile_stimato >= totaleMensileCorrente,
       dettagli: result.dettagli,
     };
   });
@@ -107,9 +109,10 @@ export async function findBestOfferta(
   });
 
   const best = pool[0];
-  // Recalculate savings if all offers are more expensive
+  // Recalculate savings and cannot_beat flag if all offers are more expensive
   if (eligible.length === 0) {
     best.risparmio_mensile = Math.max(0, totaleMensileCorrente - best.costo_mensile_stimato);
+    best.cannot_beat = true;
   }
 
   return best;
