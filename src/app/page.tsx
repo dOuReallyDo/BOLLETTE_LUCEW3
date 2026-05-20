@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { ValidatedBillData } from "@/lib/extraction/validation";
 import jsPDF from "jspdf";
 
@@ -29,9 +29,11 @@ export default function Home() {
       tipo_prezzo?: string | null;
       indice_riferimento?: string | null;
       ccv_mensile?: number | null;
+      sconto_mese?: number | null;
       dettagli_costo?: {
         prezzo_energia_mensile: number;
         ccv_mensile: number;
+        sconto_mese: number;
         trasporto_mensile: number;
         oneri_mensile: number;
         iva_totale: number;
@@ -47,6 +49,19 @@ export default function Home() {
   const [consensoMarketing, setConsensoMarketing] = useState(false);
   const [consensoProfilazione, setConsensoProfilazione] = useState(false);
   const [confirmedDownload, setConfirmedDownload] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  // Timer during processing
+  useEffect(() => {
+    if (step !== "processing") {
+      setElapsedSeconds(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setElapsedSeconds((s) => s + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [step]);
 
   const handleUpload = useCallback(async (f: File) => {
     setFile(f);
@@ -248,6 +263,7 @@ export default function Home() {
     if (p.offerta.tipo_prezzo) detailRows.push(["Prezzo", p.offerta.tipo_prezzo]);
     if (p.offerta.indice_riferimento) detailRows.push(["Indice", p.offerta.indice_riferimento]);
     if (p.offerta.ccv_mensile != null) detailRows.push(["CCV mensile", `\u20AC${p.offerta.ccv_mensile.toFixed(2)}/mese`]);
+    if (p.offerta.sconto_mese != null && p.offerta.sconto_mese > 0) detailRows.push(["Sconto multiservice", `\u2212\u20AC${p.offerta.sconto_mese.toFixed(2)}/mese`]);
 
     doc.setFontSize(9);
     detailRows.forEach(([label, value]) => {
@@ -276,10 +292,15 @@ export default function Home() {
       const costRows: [string, string][] = [
         ["Quota energia", `\u20AC${dc.prezzo_energia_mensile.toFixed(2)}/mese`],
         ["CCV (commercializzazione)", `\u20AC${dc.ccv_mensile.toFixed(2)}/mese`],
+      ];
+      if (dc.sconto_mese > 0) {
+        costRows.push(["Sconto multiservice", `\u2212\u20AC${dc.sconto_mese.toFixed(2)}/mese`]);
+      }
+      costRows.push(
         ["Trasporto e gestione", `\u20AC${dc.trasporto_mensile.toFixed(2)}/mese`],
         ["Oneri di sistema", `\u20AC${dc.oneri_mensile.toFixed(2)}/mese`],
         ["IVA", `\u20AC${dc.iva_totale.toFixed(2)}/mese`],
-      ];
+      );
 
       doc.setFontSize(9);
       costRows.forEach(([label, value]) => {
@@ -407,21 +428,21 @@ export default function Home() {
               <h2 className="text-white text-xl font-bold mb-2">
                 Sto leggendo la tua bolletta…
               </h2>
-              <p className="text-gray-300 text-sm mb-8">
+              <p className="text-gray-300 text-sm mb-4">
                 Analizziamo i dati per trovare l&apos;offerta migliore per te
               </p>
-              <div className="max-w-sm mx-auto">
-                <div className="flex justify-between text-xs text-gray-400 mb-2">
-                  <span>Caricamento</span>
-                  <span>Analisi in corso</span>
-                </div>
+              <p className="text-[#FF6B00] text-2xl font-mono font-bold">
+                {elapsedSeconds}s
+              </p>
+              <p className="text-gray-500 text-xs mt-1">
+                Tempo di elaborazione stimato: ~15 secondi
+              </p>
+              <div className="max-w-sm mx-auto mt-4">
                 <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-[#FF6B00] to-[#FF8C42] rounded-full animate-progress" />
-                </div>
-                <div className="mt-4 flex items-center justify-center gap-2 text-gray-400 text-xs">
-                  <span className="inline-block w-1.5 h-1.5 bg-[#FF6B00] rounded-full animate-bounce" style={{animationDelay: "0ms"}} />
-                  <span className="inline-block w-1.5 h-1.5 bg-[#FF6B00] rounded-full animate-bounce" style={{animationDelay: "150ms"}} />
-                  <span className="inline-block w-1.5 h-1.5 bg-[#FF6B00] rounded-full animate-bounce" style={{animationDelay: "300ms"}} />
+                  <div
+                    className="h-full bg-gradient-to-r from-[#FF6B00] to-[#FF8C42] rounded-full transition-all duration-1000"
+                    style={{ width: `${Math.min(100, Math.round((elapsedSeconds / 15) * 100))}%` }}
+                  />
                 </div>
               </div>
             </div>
@@ -659,6 +680,12 @@ export default function Home() {
                     <span className="text-white">€{proposal.offerta.ccv_mensile.toFixed(2)}/mese</span>
                   </div>
                 )}
+                {proposal.offerta.sconto_mese != null && proposal.offerta.sconto_mese > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Sconto multiservice</span>
+                    <span className="text-green-400">−€{proposal.offerta.sconto_mese.toFixed(2)}/mese</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-gray-400">Tipo fornitura</span>
                   <span className="text-white">{proposal.offerta.tipo === "luce" ? "Energia elettrica" : "Gas naturale"}</span>
@@ -687,6 +714,12 @@ export default function Home() {
                     <span className="text-gray-400">CCV (commercializzazione)</span>
                     <span className="text-white">€{proposal.offerta.dettagli_costo.ccv_mensile.toFixed(2)}/mese</span>
                   </div>
+                  {proposal.offerta.dettagli_costo.sconto_mese > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Sconto multiservice</span>
+                      <span className="text-green-400">−€{proposal.offerta.dettagli_costo.sconto_mese.toFixed(2)}/mese</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-gray-400">Trasporto e gestione</span>
                     <span className="text-white">€{proposal.offerta.dettagli_costo.trasporto_mensile.toFixed(2)}/mese</span>

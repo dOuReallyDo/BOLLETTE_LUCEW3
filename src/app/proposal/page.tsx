@@ -16,9 +16,11 @@ interface Proposal {
     tipo_prezzo?: string;
     indice_riferimento?: string;
     ccv_mensile?: number;
+    sconto_mese?: number;
     dettagli_costo?: {
       prezzo_energia_mensile: number;
       ccv_mensile: number;
+      sconto_mese: number;
       trasporto_mensile: number;
       oneri_mensile: number;
       iva_totale: number;
@@ -196,6 +198,12 @@ export default function ProposalPage() {
                     <span className="text-white">€{proposal.offerta_proposta.ccv_mensile.toFixed(2)}/mese</span>
                   </div>
                 )}
+                {proposal.offerta_proposta.sconto_mese != null && proposal.offerta_proposta.sconto_mese > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Sconto multiservice</span>
+                    <span className="text-green-400">−€{proposal.offerta_proposta.sconto_mese.toFixed(2)}/mese</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-gray-400">Tipo fornitura</span>
                   <span className="text-white">{proposal.offerta_proposta.tipo}</span>
@@ -220,6 +228,12 @@ export default function ProposalPage() {
                     <span className="text-gray-400">CCV (commercializzazione)</span>
                     <span className="text-white">€{proposal.offerta_proposta.dettagli_costo.ccv_mensile.toFixed(2)}/mese</span>
                   </div>
+                  {proposal.offerta_proposta.dettagli_costo.sconto_mese > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Sconto multiservice</span>
+                      <span className="text-green-400">−€{proposal.offerta_proposta.dettagli_costo.sconto_mese.toFixed(2)}/mese</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-gray-400">Trasporto e gestione</span>
                     <span className="text-white">€{proposal.offerta_proposta.dettagli_costo.trasporto_mensile.toFixed(2)}/mese</span>

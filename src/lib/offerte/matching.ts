@@ -37,6 +37,7 @@ export interface MatchedOfferta {
   dettagli: {
     prezzo_energia_mensile: number;
     ccv_mensile: number;
+    sconto_mese: number;
     trasporto_mensile: number;
     oneri_mensile: number;
     iva_totale: number;
@@ -202,6 +203,7 @@ function estimateMonthlyCost(
     dettagli: {
       prezzo_energia_mensile: Math.round(prezzoEnergiaMensile * 100) / 100,
       ccv_mensile: Math.round(ccvMensile * 100) / 100,
+      sconto_mese: Math.round(scontoMultiservice * 100) / 100,
       trasporto_mensile: Math.round(trasportoMensile * 100) / 100,
       oneri_mensile: Math.round(oneriMensile * 100) / 100,
       iva_totale: Math.round(ivaTotale * 100) / 100,
