@@ -162,15 +162,35 @@ export default function Home() {
         {/* Step 2: Processing */}
         {step === "processing" && (
           <div className="bg-white/10 backdrop-blur rounded-2xl p-12 text-center">
-            <div className="animate-spin text-6xl mb-6">⚡</div>
-            <h2 className="text-white text-xl font-bold mb-2">
-              Sto leggendo la tua bolletta…
-            </h2>
-            <p className="text-gray-300">
-              Analizziamo i dati per trovare l&apos;offerta migliore per te
-            </p>
+            <div className="mb-8">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#FF6B00]/20 flex items-center justify-center">
+                <svg className="w-10 h-10 text-[#FF6B00] animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h2 className="text-white text-xl font-bold mb-2">
+                Sto leggendo la tua bolletta…
+              </h2>
+              <p className="text-gray-300 text-sm mb-8">
+                Analizziamo i dati per trovare l&apos;offerta migliore per te
+              </p>
+              <div className="max-w-sm mx-auto">
+                <div className="flex justify-between text-xs text-gray-400 mb-2">
+                  <span>Caricamento</span>
+                  <span>Analisi in corso</span>
+                </div>
+                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-[#FF6B00] to-[#FF8C42] rounded-full animate-progress" />
+                </div>
+                <div className="mt-4 flex items-center justify-center gap-2 text-gray-400 text-xs">
+                  <span className="inline-block w-1.5 h-1.5 bg-[#FF6B00] rounded-full animate-bounce" style={{animationDelay: "0ms"}} />
+                  <span className="inline-block w-1.5 h-1.5 bg-[#FF6B00] rounded-full animate-bounce" style={{animationDelay: "150ms"}} />
+                  <span className="inline-block w-1.5 h-1.5 bg-[#FF6B00] rounded-full animate-bounce" style={{animationDelay: "300ms"}} />
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+        )
 
         {/* Step 3: Confirm data */}
         {step === "confirm" && editedData && (
