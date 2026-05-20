@@ -34,7 +34,7 @@ const contrattoSchema = z.object({
   brand_commerciale: nullableString,
   societa_vendita: nullableString,
   piva_venditore: nullableString,
-  mercado: z.enum(["libero", "tutela"]).nullable().optional().transform(v => v ?? undefined),
+  mercato: z.enum(["libero", "tutela"]).nullable().optional().transform(v => v ?? undefined),
   nome_offerta: nullableString,
   codice_offerta: nullableString,
   tipo_prezzo: z.enum(["fisso", "variabile", "monorario"]).nullable().optional().transform(v => v ?? undefined),
