@@ -359,13 +359,16 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a1a2e] to-[#16213e]">
-      {/* Header */}
-      <header className="bg-[#FF6B00] py-5 px-6 shadow-lg">
+      {/* Header — sticky */}
+      <header className="sticky top-0 z-50 bg-[#FF6B00] py-5 px-6 shadow-lg">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <div>
+          <button
+            onClick={() => { setStep("upload"); setError(""); setExtractedData(null); setEditedData(null); setProposal(null); setFile(null); setElapsedSeconds(0); setConfirmedDownload(false); }}
+            className="text-left"
+          >
             <h1 className="text-white font-bold text-xl leading-tight">Luce & Gas POC</h1>
             <p className="text-orange-100 text-xs">Scopri quanto puoi risparmiare</p>
-          </div>
+          </button>
         </div>
       </header>
 
@@ -424,8 +427,8 @@ export default function Home() {
           <div className="bg-white/10 backdrop-blur rounded-2xl p-12 text-center">
             <div className="mb-8">
               <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#FF6B00]/20 flex items-center justify-center">
-                <svg className="w-10 h-10 text-[#FF6B00] animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg className="w-10 h-10 text-[#FF6B00] animate-spin" style={{ animationDuration: "2s" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
               <h2 className="text-white text-xl font-bold mb-2">
