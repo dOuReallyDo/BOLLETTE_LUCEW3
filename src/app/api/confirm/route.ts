@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/client";
 import { extractedBillDataSchema, type ValidatedBillData } from "@/lib/extraction/validation";
 import { generateRedemptionCode } from "@/lib/email/proposal";
-import { sendProposalEmail } from "@/lib/email/send";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
@@ -13,7 +12,7 @@ export async function POST(req: NextRequest) {
       storagePath: string;
       fileName: string;
       mimeType: string;
-      userEmail: string;
+      userEmail?: string;
     };
 
     // Re-validate
@@ -26,7 +25,7 @@ export async function POST(req: NextRequest) {
         codice_fiscale: validated.cliente.codice_fiscale,
         nome: validated.cliente.nome,
         cognome: validated.cliente.cognome,
-        email: userEmail,
+        email: userEmail || validated.cliente.email_contatto_bolletta || null,
         email_contatto_bolletta: validated.cliente.email_contatto_bolletta || null,
         telefono: validated.cliente.telefono || null,
       })
@@ -37,7 +36,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Cliente: ${clienteErr.message}` }, { status: 500 });
     }
 
-    // 2. Upsert fornitura (by codice_punto + tipo_punto)
+    // 2. Upsert fornitura
     const { data: fornitura, error: fornErr } = await supabaseAdmin
       .from("forniture")
       .upsert({
@@ -117,37 +116,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Bolletta: ${bolErr.message}` }, { status: 500 });
     }
 
-    // 5. Insert voci costo
+    // 5-7. Insert detail records (voci, letture, consumi)
     if (validated.voci_costo?.length) {
-      const voci = validated.voci_costo.map((v) => ({
-        bolletta_id: bolletta.id,
-        ...v,
-      }));
-      const { error: vociErr } = await supabaseAdmin.from("bolletta_voci_costo").insert(voci);
-      if (vociErr) console.error("Voci costo error:", vociErr);
+      await supabaseAdmin.from("bolletta_voci_costo").insert(
+        validated.voci_costo.map((v) => ({ bolletta_id: bolletta.id, ...v }))
+      );
     }
-
-    // 6. Insert letture
     if (validated.letture?.length) {
-      const letture = validated.letture.map((l) => ({
-        bolletta_id: bolletta.id,
-        ...l,
-      }));
-      const { error: lettErr } = await supabaseAdmin.from("bolletta_letture").insert(letture);
-      if (lettErr) console.error("Letture error:", lettErr);
+      await supabaseAdmin.from("bolletta_letture").insert(
+        validated.letture.map((l) => ({ bolletta_id: bolletta.id, ...l }))
+      );
     }
-
-    // 7. Insert consumi storici
     if (validated.consumi_storici?.length) {
-      const consumi = validated.consumi_storici.map((c) => ({
-        bolletta_id: bolletta.id,
-        ...c,
-      }));
-      const { error: consErr } = await supabaseAdmin.from("bolletta_consumi_storici").insert(consumi);
-      if (consErr) console.error("Consumi storici error:", consErr);
+      await supabaseAdmin.from("bolletta_consumi_storici").insert(
+        validated.consumi_storici.map((c) => ({ bolletta_id: bolletta.id, ...c }))
+      );
     }
 
-    // 8. Insert documento originale reference
+    // 8. Insert documento reference
     const hash = crypto.createHash("sha256").update(storagePath).digest("hex");
     await supabaseAdmin.from("documenti_originali").insert({
       bolletta_id: bolletta.id,
@@ -157,10 +143,8 @@ export async function POST(req: NextRequest) {
       hash_sha256: hash,
     });
 
-    // 9. Generate proposal code + send email
+    // 9. Generate proposal (no email — shown directly on screen)
     const redemptionCode = generateRedemptionCode();
-
-    // Calculate estimated savings (simplified: 15% of current total for POC)
     const prezzoCorrente = validated.bolletta.totale_da_pagare || 0;
     const risparmioStimato = Math.round(prezzoCorrente * 0.15 * 100) / 100;
     const prezzoProposto = Math.round((prezzoCorrente - risparmioStimato) * 100) / 100;
@@ -180,7 +164,8 @@ export async function POST(req: NextRequest) {
         },
         prezzo_proposto: prezzoProposto,
         risparmio_stimato: risparmioStimato,
-        email_inviata_a: userEmail,
+        email_inviata_a: userEmail || validated.cliente.email_contatto_bolletta || null,
+        stato: "inviata", // kept for DB consistency
       })
       .select()
       .single();
@@ -189,21 +174,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Proposta: ${propErr.message}` }, { status: 500 });
     }
 
-    // 10. Send email (non-blocking)
-    sendProposalEmail(userEmail, redemptionCode, {
-      nome: validated.cliente.nome,
-      cognome: validated.cliente.cognome,
-      offerta: "FornitoreA Luce&Gas Per Te",
-      risparmio: risparmioStimato,
-      codice: redemptionCode,
-    }).catch((err) => console.error("Email send error:", err));
-
+    // Return proposal data directly (no email)
     return NextResponse.json({
       success: true,
       codice_fiscale: validated.cliente.codice_fiscale,
       bolletta_id: bolletta.id,
       proposta_id: proposta.id,
-      codice_redenzione: redemptionCode,
+      proposal: {
+        codice_fiscale: validated.cliente.codice_fiscale,
+        codice_redenzione: redemptionCode,
+        prezzo_corrente: prezzoCorrente,
+        prezzo_proposto: prezzoProposto,
+        risparmio_stimato: risparmioStimato,
+        nome: validated.cliente.nome,
+        cognome: validated.cliente.cognome,
+        offerta: {
+          nome: "FornitoreA Luce&Gas Per Te",
+          tipo: validated.fornitura.tipo_fornitura === "luce" ? "energia" : "gas",
+          fornitore_attuale: validated.contratto.brand_commerciale || validated.contratto.societa_vendita || "",
+          offerta_attuale: validated.contratto.nome_offerta || "",
+        },
+      },
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Errore durante il salvataggio";

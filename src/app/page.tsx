@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import type { ValidatedBillData } from "@/lib/extraction/validation";
 
-type Step = "upload" | "processing" | "confirm" | "email" | "done";
+type Step = "upload" | "processing" | "confirm" | "proposal";
 
 export default function Home() {
   const [step, setStep] = useState<Step>("upload");
@@ -11,10 +11,24 @@ export default function Home() {
   const [extractedData, setExtractedData] = useState<ValidatedBillData | null>(null);
   const [editedData, setEditedData] = useState<ValidatedBillData | null>(null);
   const [storagePath, setStoragePath] = useState("");
-  const [userEmail, setUserEmail] = useState("");
   const [error, setError] = useState("");
-  const [code, setCode] = useState("");
   const [dragActive, setDragActive] = useState(false);
+  const [proposal, setProposal] = useState<{
+    codice_fiscale: string;
+    codice_redenzione: string;
+    prezzo_corrente: number;
+    prezzo_proposto: number;
+    risparmio_stimato: number;
+    offerta: {
+      nome: string;
+      tipo: string;
+      fornitore_attuale: string;
+      offerta_attuale: string;
+    };
+    nome: string;
+    cognome: string;
+  } | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const handleUpload = useCallback(async (f: File) => {
     setFile(f);
@@ -37,7 +51,6 @@ export default function Home() {
       setExtractedData(json.data);
       setEditedData(json.data);
       setStoragePath(json.storagePath);
-      setUserEmail(json.data.cliente?.email_contatto_bolletta || "");
       setStep("confirm");
     } catch {
       setError("Errore di connessione");
@@ -46,12 +59,7 @@ export default function Home() {
   }, []);
 
   const handleConfirm = async () => {
-    if (!userEmail || !userEmail.includes("@")) {
-      setError("Inserisci un'email valida");
-      return;
-    }
-
-    setStep("email");
+    setSaving(true);
     setError("");
 
     try {
@@ -63,22 +71,23 @@ export default function Home() {
           storagePath,
           fileName: file?.name,
           mimeType: file?.type,
-          userEmail,
+          userEmail: "",
         }),
       });
       const json = await res.json();
 
       if (!res.ok) {
         setError(json.error || "Errore durante il salvataggio");
-        setStep("confirm");
+        setSaving(false);
         return;
       }
 
-      setCode(json.codice_redenzione);
-      setStep("done");
+      setProposal(json.proposal);
+      setStep("proposal");
     } catch {
       setError("Errore di connessione");
-      setStep("confirm");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -92,6 +101,93 @@ export default function Home() {
     }
     obj[keys[keys.length - 1]] = value;
     setEditedData(newData);
+  };
+
+  const downloadPDF = () => {
+    if (!proposal || !editedData) return;
+    const p = proposal;
+    const d = editedData;
+    const tipo = d.fornitura.tipo_fornitura === "luce" ? "Energia Elettrica" : "Gas Naturale";
+
+    const html = `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Proposta FornitoreA Luce & Gas</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 40px; color: #1a1a2e; }
+  .header { background: linear-gradient(135deg, #FF6B00, #FF8C42); color: white; padding: 30px; border-radius: 12px; margin-bottom: 30px; text-align: center; }
+  .header h1 { margin: 0; font-size: 24px; }
+  .header p { margin: 5px 0 0; opacity: 0.9; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+  .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; }
+  .card.oggi { background: #fef2f2; border-color: #fca5a5; }
+  .card.fornitorea { background: #f0fdf4; border-color: #86efac; }
+  .card h3 { margin: 0 0 10px; font-size: 14px; }
+  .card .price { font-size: 32px; font-weight: bold; }
+  .card.oggi .price { color: #dc2626; }
+  .card.fornitorea .price { color: #16a34a; }
+  .savings { background: #fff7ed; border: 2px solid #FF6B00; border-radius: 8px; padding: 25px; text-align: center; margin-bottom: 30px; }
+  .savings .amount { font-size: 48px; font-weight: bold; color: #FF6B00; }
+  .savings .label { font-size: 16px; color: #666; }
+  .details { border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 30px; }
+  .details h3 { margin: 0 0 15px; }
+  .details table { width: 100%; border-collapse: collapse; }
+  .details td { padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
+  .details td:first-child { color: #6b7280; width: 50%; }
+  .details td:last-child { font-weight: 500; text-align: right; }
+  .code { background: #1a1a2e; color: white; text-align: center; padding: 20px; border-radius: 8px; margin-top: 30px; }
+  .code .label { font-size: 12px; opacity: 0.7; margin-bottom: 5px; }
+  .code .value { font-size: 32px; font-weight: bold; letter-spacing: 8px; }
+  .footer { text-align: center; margin-top: 40px; color: #9ca3af; font-size: 11px; }
+  @media print { body { margin: 20px; } }
+</style></head><body>
+  <div class="header">
+    <h1>FornitoreA Luce & Gas</h1>
+    <p>Proposta personalizzata per ${p.nome} ${p.cognome}</p>
+  </div>
+  <div class="grid">
+    <div class="card oggi">
+      <h3>Oggi paghi</h3>
+      <div class="price">&euro;${p.prezzo_corrente.toFixed(2)}/mese</div>
+      <p style="font-size:12px;color:#666">${p.offerta.fornitore_attuale} &mdash; ${p.offerta.offerta_attuale}</p>
+    </div>
+    <div class="card fornitorea">
+      <h3>Con FornitoreA paghi</h3>
+      <div class="price">&euro;${p.prezzo_proposto.toFixed(2)}/mese</div>
+      <p style="font-size:12px;color:#666">${p.offerta.nome}</p>
+    </div>
+  </div>
+  <div class="savings">
+    <div class="label">Risparmio stimato</div>
+    <div class="amount">&euro;${p.risparmio_stimato.toFixed(2)}/mese</div>
+  </div>
+  <div class="details">
+    <h3>Dettagli fornitura</h3>
+    <table>
+      <tr><td>Tipo</td><td>${tipo}</td></tr>
+      <tr><td>POD/PDR</td><td>${d.fornitura.codice_punto}</td></tr>
+      <tr><td>Indirizzo</td><td>${d.fornitura.indirizzo_fornitura || ""}, ${d.fornitura.comune || ""} (${d.fornitura.provincia || ""})</td></tr>
+      <tr><td>Fornitore attuale</td><td>${p.offerta.fornitore_attuale}</td></tr>
+      <tr><td>Offerta attuale</td><td>${p.offerta.offerta_attuale}</td></tr>
+      <tr><td>Consumo annuo</td><td>${d.bolletta.consumo_annuo || ""} ${d.bolletta.unita_consumo || ""}</td></tr>
+    </table>
+  </div>
+  <div class="code">
+    <div class="label">Codice personale della proposta</div>
+    <div class="value">${p.codice_redenzione}</div>
+  </div>
+  <div class="footer">
+    FornitoreA Luce&Gas &mdash; POC dimostrativo interno &mdash; Proposta non vincolante<br>
+    Codice valido per 30 giorni
+  </div>
+</body></html>`;
+
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `proposta-fornitorea-${p.codice_redenzione}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -215,7 +311,7 @@ export default function Home() {
               <h3 className="text-[#FF6B00] font-semibold mb-3">🏡 Fornitura</h3>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Tipo" value={editedData.fornitura.tipo_fornitura} onChange={(v) => updateField("fornitura.tipo_fornitura", v)} />
-                <Field label={`${editedData.fornitura.tipo_punto}`} value={editedData.fornitura.codice_punto} onChange={(v) => updateField("fornitura.codice_punto", v)} />
+                <Field label={editedData.fornitura.tipo_punto} value={editedData.fornitura.codice_punto} onChange={(v) => updateField("fornitura.codice_punto", v)} />
                 <Field label="Indirizzo" value={editedData.fornitura.indirizzo_fornitura || ""} onChange={(v) => updateField("fornitura.indirizzo_fornitura", v)} />
                 <Field label="Comune" value={editedData.fornitura.comune || ""} onChange={(v) => updateField("fornitura.comune", v)} />
               </div>
@@ -242,60 +338,93 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Email input */}
-            <div className="bg-[#FF6B00]/20 border border-[#FF6B00]/40 rounded-xl p-5 mb-6">
-              <h3 className="text-[#FF6B00] font-semibold mb-3">📧 Dove vuoi ricevere la proposta?</h3>
-              {editedData.cliente.email_contatto_bolletta && (
-                <p className="text-gray-300 text-sm mb-2">
-                  ⚠️ L&apos;email trovata in bolletta ({editedData.cliente.email_contatto_bolletta}) potrebbe non essere la tua. Verifica!
-                </p>
-              )}
-              <input
-                type="email"
-                value={userEmail}
-                onChange={(e) => setUserEmail(e.target.value)}
-                placeholder="la.tua.email@esempio.it"
-                className="w-full bg-white/10 text-white border border-gray-600 rounded-lg px-4 py-3 focus:border-[#FF6B00] focus:outline-none"
-              />
-            </div>
-
             <button
               onClick={handleConfirm}
-              className="w-full bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-4 rounded-xl transition-all text-lg"
+              disabled={saving}
+              className="w-full bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-4 rounded-xl transition-all text-lg disabled:opacity-50"
             >
-              Conferma e ricevi la proposta →
+              {saving ? "Calcolo proposta…" : "Vedi la tua proposta →"}
             </button>
           </div>
         )}
 
-        {/* Step 4: Email sending */}
-        {step === "email" && (
-          <div className="bg-white/10 backdrop-blur rounded-2xl p-12 text-center">
-            <div className="animate-bounce text-5xl mb-4">📬</div>
-            <h2 className="text-white text-xl font-bold mb-2">
-              Stiamo preparando la tua proposta…
-            </h2>
-            <p className="text-gray-300">Un momento e la ricevi via email</p>
-          </div>
-        )}
-
-        {/* Step 5: Done */}
-        {step === "done" && (
-          <div className="bg-white/10 backdrop-blur rounded-2xl p-8 text-center">
-            <div className="text-6xl mb-4">✅</div>
+        {/* Step 4: Proposal */}
+        {step === "proposal" && proposal && editedData && (
+          <div className="bg-white/10 backdrop-blur rounded-2xl p-8">
             <h2 className="text-white text-2xl font-bold mb-2">
-              Proposta inviata!
+              {proposal.nome}, ecco la tua offerta! 🎉
             </h2>
-            <p className="text-gray-300 mb-6">
-              Controlla la tua email. Il tuo codice personale è:
+            <p className="text-gray-300 mb-8">
+              Risparmio stimato sulla tua fornitura {editedData.fornitura.tipo_fornitura}
             </p>
-            <div className="bg-[#FF6B00] text-white text-3xl font-mono tracking-[0.5em] py-4 rounded-xl mb-6">
-              {code}
+
+            {/* Current vs Proposed */}
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="bg-red-500/10 border border-red-400/30 rounded-xl p-5 text-center">
+                <p className="text-red-300 text-sm mb-1">Oggi paghi</p>
+                <p className="text-red-400 text-3xl font-bold">
+                  €{proposal.prezzo_corrente.toFixed(2)}
+                </p>
+                <p className="text-gray-500 text-xs mt-1">
+                  {proposal.offerta.fornitore_attuale} — {proposal.offerta.offerta_attuale}
+                </p>
+              </div>
+              <div className="bg-green-500/10 border border-green-400/30 rounded-xl p-5 text-center">
+                <p className="text-green-300 text-sm mb-1">Con FornitoreA paghi</p>
+                <p className="text-green-400 text-3xl font-bold">
+                  €{proposal.prezzo_proposto.toFixed(2)}
+                </p>
+                <p className="text-gray-500 text-xs mt-1">{proposal.offerta.nome}</p>
+              </div>
             </div>
-            <p className="text-gray-400 text-sm">
-              Inseriscilo nella pagina per vedere la tua offerta personalizzata.
-              Valido per 30 giorni.
-            </p>
+
+            {/* Savings */}
+            <div className="bg-[#FF6B00]/20 border border-[#FF6B00]/40 rounded-xl p-6 text-center mb-8">
+              <p className="text-[#FF6B00] text-lg font-semibold">Risparmio stimato</p>
+              <p className="text-[#FF6B00] text-5xl font-bold mt-2">
+                €{proposal.risparmio_stimato.toFixed(2)}/mese
+              </p>
+            </div>
+
+            {/* Offer details */}
+            <div className="bg-white/5 rounded-xl p-5 mb-6">
+              <h3 className="text-white font-semibold mb-3">Dettagli offerta</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Offerta</span>
+                  <span className="text-white">{proposal.offerta.nome}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Tipo fornitura</span>
+                  <span className="text-white">{proposal.offerta.tipo === "luce" ? "Energia elettrica" : "Gas naturale"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">POD/PDR</span>
+                  <span className="text-white">{editedData.fornitura.codice_punto}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Consumo annuo</span>
+                  <span className="text-white">{editedData.bolletta.consumo_annuo} {editedData.bolletta.unita_consumo}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Personal code */}
+            <div className="bg-[#1a1a2e] border border-white/20 rounded-xl p-6 text-center mb-8">
+              <p className="text-gray-400 text-sm mb-2">Il tuo codice personale</p>
+              <p className="text-[#FF6B00] text-4xl font-mono tracking-[0.3em] font-bold">
+                {proposal.codice_redenzione}
+              </p>
+              <p className="text-gray-500 text-xs mt-2">Valido per 30 giorni — identificativo univoco della tua proposta</p>
+            </div>
+
+            {/* Download */}
+            <button
+              onClick={downloadPDF}
+              className="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition-all text-lg border border-white/20 mb-4"
+            >
+              📥 Scarica la proposta
+            </button>
           </div>
         )}
       </main>
