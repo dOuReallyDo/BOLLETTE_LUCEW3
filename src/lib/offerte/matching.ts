@@ -191,27 +191,33 @@ function estimateMonthlyCost(
   // ── 7. Sconto multiservice ──────────────────────────────────
   const scontoMultiservice = getMonthlyDiscount(offerta) ?? 0;
 
-  const costoMensile =
-    prezzoEnergiaMensile +
-    ccvMensile +
-    trasportoMensile +
-    oneriMensile +
-    accisaMensile +
-    ivaTotale -
-    scontoMultiservice;
+  const dettagli = {
+    prezzo_energia_mensile: Math.round(prezzoEnergiaMensile * 100) / 100,
+    ccv_mensile: Math.round(ccvMensile * 100) / 100,
+    sconto_mese: Math.round(scontoMultiservice * 100) / 100,
+    trasporto_mensile: Math.round(trasportoMensile * 100) / 100,
+    oneri_mensile: Math.round(oneriMensile * 100) / 100,
+    accise_mensile: Math.round(accisaMensile * 100) / 100,
+    iva_totale: Math.round(ivaTotale * 100) / 100,
+    totale_calcolato: 0, // placeholder, computed below
+  };
+
+  // Totale = somma delle righe visibili (lo sconto è già detratto)
+  dettagli.totale_calcolato = Math.max(0, Math.round(
+    (dettagli.prezzo_energia_mensile +
+     dettagli.ccv_mensile -
+     dettagli.sconto_mese +
+     dettagli.trasporto_mensile +
+     dettagli.oneri_mensile +
+     dettagli.accise_mensile +
+     dettagli.iva_totale) * 100
+  ) / 100);
+
+  const costoMensile = dettagli.totale_calcolato;
 
   return {
-    costo_mensile_stimato: Math.max(0, Math.round(costoMensile * 100) / 100),
-    dettagli: {
-      prezzo_energia_mensile: Math.round(prezzoEnergiaMensile * 100) / 100,
-      ccv_mensile: Math.round(ccvMensile * 100) / 100,
-      sconto_mese: Math.round(scontoMultiservice * 100) / 100,
-      trasporto_mensile: Math.round(trasportoMensile * 100) / 100,
-      oneri_mensile: Math.round(oneriMensile * 100) / 100,
-      accise_mensile: Math.round(accisaMensile * 100) / 100,
-      iva_totale: Math.round(ivaTotale * 100) / 100,
-      totale_calcolato: Math.max(0, Math.round(costoMensile * 100) / 100),
-    },
+    costo_mensile_stimato: costoMensile,
+    dettagli,
   };
 }
 

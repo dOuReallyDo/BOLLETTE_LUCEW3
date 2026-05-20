@@ -438,13 +438,13 @@ export default function Home() {
                 {elapsedSeconds}s
               </p>
               <p className="text-gray-500 text-xs mt-1">
-                Tempo di elaborazione stimato: ~15 secondi
+                Tempo di elaborazione stimato: ~60 secondi
               </p>
               <div className="max-w-sm mx-auto mt-4">
                 <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-[#FF6B00] to-[#FF8C42] rounded-full transition-all duration-1000"
-                    style={{ width: `${Math.min(100, Math.round((elapsedSeconds / 15) * 100))}%` }}
+                    style={{ width: `${Math.min(100, Math.round((elapsedSeconds / 60) * 100))}%` }}
                   />
                 </div>
               </div>
