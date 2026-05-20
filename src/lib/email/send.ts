@@ -21,7 +21,7 @@ export async function sendProposalEmail(
 
   await resend.emails.send({
     from: "FornitoreA Luce&Gas <onboarding@resend.dev>",
-    to,
+    to: process.env.RESEND_TEST_TO || to,
     subject: `${data.nome}, scopri quanto puoi risparmiare con FornitoreA! 💡`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa; border-radius: 12px; overflow: hidden;">
