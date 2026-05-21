@@ -26,8 +26,6 @@
   --shadow: rgba(0,0,0,0.3);
   --doc-bg: rgba(255,255,255,0.90);
   --doc-line: #d1d5db;
-  --glass-blur: 1;
-  --doc-icon-bg: linear-gradient(to bottom right, rgba(255,255,255,0.9), rgba(209,213,219,0.9));
   --progress-track: rgba(255,255,255,0.10);
 }
 
@@ -55,8 +53,6 @@
   --shadow: rgba(0,0,0,0.06);
   --doc-bg: #ffffff;
   --doc-line: #d1d5db;
-  --glass-blur: 0;
-  --doc-icon-bg: linear-gradient(to bottom right, #ffffff, #f3f4f6);
   --progress-track: rgba(0,0,0,0.08);
 }
 
@@ -73,23 +69,27 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* ═══ Theme-aware overrides ═══ */
-[data-theme="light"] .bg-gradient-to-b.from-\[\#1a1a2e\] {
-  background: linear-gradient(to bottom, var(--bg-primary), var(--bg-secondary));
+/* ═══ Light theme overrides — page body only, NOT the orange header ═══ */
+
+/* Background gradient */
+[data-theme="light"] .min-h-screen.bg-gradient-to-b {
+  background: linear-gradient(to bottom, var(--bg-primary), var(--bg-secondary)) !important;
+}
+
+/* Glass cards */
+[data-theme="light"] .backdrop-blur {
+  backdrop-filter: none !important;
 }
 
 [data-theme="light"] .bg-white\/10 {
-  background: var(--bg-card);
+  background: var(--bg-card) !important;
 }
 
 [data-theme="light"] .bg-white\/5 {
-  background: var(--bg-card-inner);
+  background: var(--bg-card-inner) !important;
 }
 
-[data-theme="light"] .text-white {
-  color: var(--text-primary);
-}
-
+/* Text — BUT not inside .bg-[#FF6B00] header (stays white) */
 [data-theme="light"] .text-gray-300 {
   color: var(--text-secondary);
 }
@@ -106,19 +106,85 @@ body {
   color: var(--accent);
 }
 
-[data-theme="light"] .text-orange-100 {
-  color: var(--accent-light);
+/* Body text-white → dark text, but header stays white */
+[data-theme="light"] .text-white:not(.bg-\[\#FF6B00\] .text-white) {
+  color: var(--text-primary);
 }
 
-[data-theme="light"] .border-gray-600,
-[data-theme="light"] .border-white\/20,
+/* Orange-100 subtext in header stays white in light mode */
+[data-theme="light"] .bg-\[\#FF6B00\] .text-orange-100 {
+  color: #ffedd5 !important;
+}
+
+/* Borders */
+[data-theme="light"] .border-gray-600 {
+  border-color: var(--border);
+}
+
+[data-theme="light"] .border-white\/20 {
+  border-color: var(--border);
+}
+
 [data-theme="light"] .border-white\/10 {
   border-color: var(--border);
 }
 
-[data-theme="light"] .bg-white\/10\.text-white\.border {
-  background: var(--input-bg);
-  border-color: var(--input-border);
+/* Inputs */
+[data-theme="light"] input[type="text"],
+[data-theme="light"] input[type="email"],
+[data-theme="light"] input[type="tel"] {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="light"] input[type="text"]:focus,
+[data-theme="light"] input[type="email"]:focus,
+[data-theme="light"] input[type="tel"]:focus {
+  border-color: var(--accent) !important;
+}
+
+[data-theme="light"] input[type="text"]::placeholder,
+[data-theme="light"] input[type="email"]::placeholder,
+[data-theme="light"] input[type="tel"]::placeholder {
+  color: var(--text-dim) !important;
+}
+
+/* Checkboxes */
+[data-theme="light"] input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+/* Progress bar track */
+[data-theme="light"] .h-3.bg-white\/10,
+[data-theme="light"] .h-2.bg-white\/10 {
+  background: var(--progress-track) !important;
+}
+
+/* Error card */
+[data-theme="light"] .bg-red-500\/20 {
+  background: var(--error-bg) !important;
+  border-color: var(--error) !important;
+}
+
+/* Green text in light mode */
+[data-theme="light"] .text-green-400 {
+  color: var(--success-text) !important;
+}
+
+/* Red error text */
+[data-theme="light"] .text-red-400 {
+  color: var(--error) !important;
+}
+
+/* Document icon in processing step */
+[data-theme="light"] .bg-gradient-to-br.from-white\/90 {
+  background: var(--doc-bg) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+[data-theme="light"] .bg-gradient-to-br.from-white\/90 .bg-gray-300 {
+  background: var(--doc-line) !important;
 }
 
 @keyframes progress {

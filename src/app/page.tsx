@@ -387,13 +387,22 @@ export default function Home() {
     doc.text(p.codice_redenzione, pageW / 2, y + 19, { align: "center" });
     y += 34;
 
-    // ── FAC SIMILE watermark (diagonal) ─────────────────────
-    doc.setTextColor(180, 180, 180);
-    doc.setFontSize(72);
+    // ── FAC SIMILE badge (top-right on orange header) ──────────
+    doc.setFillColor(255, 255, 255);
+    const badgeX = pageW - margin;
+    const badgeY = 9;
+    const badgeW = 52;
+    const badgeH = 20;
+    doc.roundedRect(badgeX - badgeW, badgeY, badgeW, badgeH, 3, 3, "F");
+    doc.setFillColor(255, 107, 0);
+    doc.roundedRect(badgeX - badgeW + 1.5, badgeY + 1.5, badgeW - 3, badgeH - 3, 2, 2, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(6);
     doc.setFont("helvetica", "bold");
-    const cx = pageW / 2;
-    const cy = 140;
-    doc.text("FAC SIMILE", cx, cy, { angle: 45, align: "center" });
+    doc.text("FAC SIMILE", badgeX - badgeW / 2, badgeY + 9.5, { align: "center" });
+    doc.setFontSize(4.5);
+    doc.setFont("helvetica", "normal");
+    doc.text("solo per finalità dimostrative", badgeX - badgeW / 2, badgeY + 14.5, { align: "center" });
 
     // ── Footer ─────────────────────────────────────────────
     doc.setTextColor(156, 163, 175);
