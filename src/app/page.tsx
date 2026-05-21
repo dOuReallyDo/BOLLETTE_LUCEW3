@@ -465,44 +465,25 @@ export default function Home() {
         {/* Step 2: Processing */}
         {step === "processing" && (
           <div className="bg-white/10 backdrop-blur rounded-2xl p-12 text-center">
-            <div className="mb-8">
-              <div className="relative w-28 h-28 mx-auto mb-6">
-                {/* Glow halo */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-400/25 via-amber-500/15 to-yellow-300/10 blur-md animate-pulse" />
+            <div className="mb-6">
+              <div className="relative w-24 h-28 mx-auto mb-4">
                 {/* Document icon */}
-                <div className="relative w-20 h-24 mx-auto mt-2 rounded-lg bg-gradient-to-br from-white/90 to-gray-200/90 shadow-lg shadow-black/30 border border-white/50 flex flex-col items-center justify-center overflow-hidden">
-                  <div className="w-10 h-[2px] bg-gray-300 rounded my-[3px]" />
-                  <div className="w-8 h-[2px] bg-gray-300 rounded my-[3px]" />
-                  <div className="w-10 h-[2px] bg-gray-300 rounded my-[3px]" />
-                  <div className="w-6 h-[2px] bg-gray-300 rounded my-[3px]" />
+                <div className="relative w-16 h-20 mx-auto rounded-lg bg-gradient-to-br from-white/90 to-gray-200/90 shadow-lg shadow-black/30 border border-white/50 flex flex-col items-center justify-center overflow-hidden">
+                  <div className="w-8 h-[2px] bg-gray-300 rounded my-[2px]" />
+                  <div className="w-6 h-[2px] bg-gray-300 rounded my-[2px]" />
+                  <div className="w-8 h-[2px] bg-gray-300 rounded my-[2px]" />
+                  <div className="w-5 h-[2px] bg-gray-300 rounded my-[2px]" />
                 </div>
-                {/* Lightning bolt orbiting */}
-                <svg className="absolute inset-0 w-28 h-28 animate-spin" style={{ animationDuration: "3s" }} viewBox="0 0 112 112" fill="none">
-                  <defs>
-                    <linearGradient id="boltGrad" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#FF6B00" />
-                      <stop offset="50%" stopColor="#FFB347" />
-                      <stop offset="100%" stopColor="#FFD700" />
-                    </linearGradient>
-                    <filter id="boltGlow">
-                      <feGaussianBlur stdDeviation="2" result="blur" />
-                      <feMerge>
-                        <feMergeNode in="blur" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                  </defs>
-                  <g filter="url(#boltGlow)">
-                    <path d="M88 6 L82 20 L90 18 L82 38" stroke="url(#boltGrad)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                    <path d="M85 8 L83 16 L88 15 L83 28" stroke="#FFD700" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.7" />
-                  </g>
-                </svg>
-                {/* Second lightning — opposite side, slower */}
-                <svg className="absolute inset-0 w-28 h-28 animate-spin" style={{ animationDuration: "4.5s", animationDirection: "reverse" }} viewBox="0 0 112 112" fill="none">
-                  <g filter="url(#boltGlow)">
-                    <path d="M18 70 L24 82 L16 80 L24 98" stroke="url(#boltGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.6" />
-                  </g>
-                </svg>
+                {/* Magnifying glass scanning: L→R then T→B, loop */}
+                <div className="absolute inset-0" style={{ animation: 'scanLoop 6s ease-in-out infinite' }}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="drop-shadow-lg">
+                    <circle cx="10" cy="10" r="7" stroke="#FF6B00" strokeWidth="2" fill="rgba(255,107,0,0.08)" />
+                    <circle cx="10" cy="10" r="5" stroke="#FFB347" strokeWidth="0.8" fill="none" opacity="0.5" />
+                    <line x1="15" y1="15" x2="21" y2="21" stroke="#FF6B00" strokeWidth="2.5" strokeLinecap="round" />
+                    {/* Shine inside lens */}
+                    <path d="M7 7 Q9 6 10 8" stroke="#FFD700" strokeWidth="0.8" fill="none" opacity="0.6" />
+                  </svg>
+                </div>
               </div>
               <h2 className="text-white text-xl font-bold mb-2">
                 Sto leggendo la tua bolletta…
@@ -510,14 +491,14 @@ export default function Home() {
               <p className="text-gray-300 text-sm mb-4">
                 Analizziamo i dati per trovare l&apos;offerta migliore per te
               </p>
-              <p className="text-[#FF6B00] text-2xl font-mono font-bold">
+              <p className="text-[#FF6B00] text-3xl font-mono font-bold">
                 {elapsedSeconds}s
               </p>
               <p className="text-gray-500 text-xs mt-1">
                 Tempo di elaborazione stimato: ~60 secondi
               </p>
-              <div className="max-w-sm mx-auto mt-4">
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+              <div className="max-w-md mx-auto mt-4">
+                <div className="h-3 bg-white/10 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-[#FF6B00] to-[#FF8C42] rounded-full transition-all duration-1000"
                     style={{ width: `${Math.min(100, Math.round((elapsedSeconds / 60) * 100))}%` }}

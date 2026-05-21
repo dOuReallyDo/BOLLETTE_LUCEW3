@@ -37,3 +37,13 @@ body {
 .animate-progress {
   animation: progress 8s ease-out forwards;
 }
+
+/* Magnifying glass scan: L→R across top, then T→B along right, loop */
+@keyframes scanLoop {
+  0%   { transform: translate(-8px, -6px); }
+  40%  { transform: translate(42px, -6px); }
+  45%  { transform: translate(42px, -4px); }
+  90%  { transform: translate(42px, 48px); }
+  95%  { transform: translate(-8px, 48px); }
+  100% { transform: translate(-8px, -6px); }
+}
