@@ -106,9 +106,14 @@ body {
   color: var(--accent);
 }
 
-/* Body text-white → dark text, but header stays white */
-[data-theme="light"] .text-white:not(.bg-\[\#FF6B00\] .text-white) {
+/* Body text-white → dark text, but stays white ON orange bg elements */
+[data-theme="light"] .text-white:not(.bg-\[#FF6B00\] .text-white):not(.bg-\[#FF6B00\]) {
   color: var(--text-primary);
+}
+
+/* Any text-white element that also has orange background keeps white text */
+[data-theme="light"] .bg-\[#FF6B00\].text-white {
+  color: #ffffff !important;
 }
 
 /* Orange-100 subtext in header stays white in light mode */
