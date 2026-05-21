@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import type { ValidatedBillData } from "@/lib/extraction/validation";
+import { validaCodiceFiscale } from "@/lib/codice-fiscale";
 import jsPDF from "jspdf";
 
 type Step = "upload" | "processing" | "confirm" | "contact" | "cannot_beat" | "proposal";
@@ -53,6 +54,21 @@ export default function Home() {
   const [consensoProfilazione, setConsensoProfilazione] = useState(false);
   const [confirmedDownload, setConfirmedDownload] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  // Validazione Codice Fiscale (live)
+  const cfValidation = useMemo(() => {
+    if (!editedData?.cliente?.codice_fiscale) return null;
+    return validaCodiceFiscale(editedData.cliente.codice_fiscale);
+  }, [editedData?.cliente?.codice_fiscale]);
+
+  // Brand del fornitore per check email (uso contratto.brand_commerciale e societa_vendita)
+  const fournitorBrands = useMemo(() => {
+    if (!editedData?.contratto) return new Set<string>();
+    const brands = [editedData.contratto.brand_commerciale, editedData.contratto.societa_vendita]
+      .filter(Boolean)
+      .map(b => b!.toLowerCase().replace(/[^a-z0-9]/g, ''));
+    return new Set(brands);
+  }, [editedData?.contratto?.brand_commerciale, editedData?.contratto?.societa_vendita]);
 
   // Timer during processing
   useEffect(() => {
@@ -107,7 +123,18 @@ export default function Home() {
       setExtractedData(result.data);
       setEditedData(result.data);
       setStoragePath(result.storagePath);
-      setContactEmail(result.data.cliente?.email_contatto_bolletta || "");
+      // Pre-popola email solo se non richiama il dominio del gestore della bolletta
+      const parsedEmail = result.data.cliente?.email_contatto_bolletta || "";
+      if (parsedEmail && result.data.contratto) {
+        const domain = parsedEmail.split('@')[1]?.toLowerCase().replace(/[^a-z0-9]/g, '') || '';
+        const brandNames = [result.data.contratto.brand_commerciale, result.data.contratto.societa_vendita]
+          .filter(Boolean)
+          .map(b => b!.toLowerCase().replace(/[^a-z0-9]/g, ''));
+        const isGestoreEmail = brandNames.some(brand => brand && (domain.includes(brand) || brand.includes(domain)));
+        setContactEmail(isGestoreEmail ? '' : parsedEmail);
+      } else {
+        setContactEmail(parsedEmail);
+      }
       setContactPhone(result.data.cliente?.telefono || "");
       setStep("confirm");
     } catch (err) {
@@ -118,6 +145,18 @@ export default function Home() {
   const handleConfirm = async () => {
     setSaving(true);
     setError("");
+
+    // Normalizza CF prima di inviare (corregge O→0, I→1)
+    if (editedData?.cliente?.codice_fiscale) {
+      const cfResult = validaCodiceFiscale(editedData.cliente.codice_fiscale);
+      if (cfResult.normalized) {
+        updateField("cliente.codice_fiscale", cfResult.normalized);
+      }
+      // Se CF ancora non valido dopo normalizzazione, avvisa ma non blocca
+      if (!cfResult.valid && editedData.cliente.codice_fiscale.trim().length >= 6) {
+        // L'utente ha già visto il warning nella UI — procediamo
+      }
+    }
 
     try {
       const res = await fetch("/api/confirm", {
@@ -472,7 +511,24 @@ export default function Home() {
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Nome" value={editedData.cliente.nome} onChange={(v) => updateField("cliente.nome", v)} />
                 <Field label="Cognome" value={editedData.cliente.cognome} onChange={(v) => updateField("cliente.cognome", v)} />
-                <Field label="Codice Fiscale" value={editedData.cliente.codice_fiscale} onChange={(v) => updateField("cliente.codice_fiscale", v)} />
+                <div className="col-span-2">
+                  <Field
+                    label="Codice Fiscale"
+                    value={editedData.cliente.codice_fiscale}
+                    onChange={(v) => {
+                      updateField("cliente.codice_fiscale", v);
+                    }}
+                    error={cfValidation && !cfValidation.valid ? cfValidation.error : undefined}
+                  />
+                  {cfValidation && cfValidation.valid && cfValidation.normalized && cfValidation.normalized !== editedData.cliente.codice_fiscale.trim().toUpperCase() && (
+                    <p className="text-green-400 text-xs mt-1">
+                      ✓ Codice Fiscale corretto dopo normalizzazione OCR (O→0, I→1)
+                    </p>
+                  )}
+                  {cfValidation && cfValidation.valid && (
+                    <p className="text-green-400 text-xs mt-1">✓ Codice Fiscale valido</p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -550,6 +606,9 @@ export default function Home() {
                     placeholder="+39 3XX XXX XXXX"
                     className="w-full bg-white/10 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none"
                   />
+                  <p className="text-gray-500 text-[10px] mt-1">
+                    Per numeri italiani puoi omettere il prefisso +39
+                  </p>
                 </div>
               </div>
             </div>
@@ -878,11 +937,13 @@ function Field({
   value,
   onChange,
   disabled,
+  error,
 }: {
   label: string;
   value: string;
   onChange?: (v: string) => void;
   disabled?: boolean;
+  error?: string;
 }) {
   return (
     <div>
@@ -892,10 +953,15 @@ function Field({
         value={value}
         disabled={disabled}
         onChange={(e) => onChange?.(e.target.value)}
-        className={`w-full bg-white/10 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm ${
-          disabled ? "opacity-60" : "focus:border-[#FF6B00] focus:outline-none"
-        }`}
+        className={`w-full bg-white/10 text-white border rounded-lg px-3 py-2 text-sm ${
+          error
+            ? "border-red-400 focus:border-red-400"
+            : disabled
+              ? "border-gray-600 opacity-60"
+              : "border-gray-600 focus:border-[#FF6B00]"
+        } focus:outline-none`}
       />
+      {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
     </div>
   );
 }
