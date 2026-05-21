@@ -35,7 +35,7 @@ offerte (6 offerte reali da Excel Maggio 2026)
 
 Migrazioni:
 - `001_initial_schema.sql` — tabelle principali
-- `002_offerte_fornitorea.sql` — (obsoleta, vedi 004)
+- `002_offerte.sql` — (obsoleta, vedi 004)
 - `003_gdpr_contact.sql` — campi GDPR su proposte_offerta
 - `004_offerte_rewrite.sql` — tabella offerte riscritta da Excel
 
@@ -102,16 +102,16 @@ PRIMA di generare la proposta: email obbligatoria + 3 checkbox:
 
 Tutti i consensi e il timestamp sono salvati in `proposte_offerta`.
 
-## Golden Test (4 PDF reali)
+## Golden Test (4 PDF di test)
 
-| PDF | Fornitore | Tipo | POD/PDR | Totale | Esito |
-|-----|-----------|------|---------|--------|-------|
-| test_fattura_1.pdf | FornitoreA/SocietaA | Luce | IT012E00ABCDEF | €135.82 | ✅ |
-| test_fattura_2.pdf | FornitoreA/SocietaA | Gas | 01234567890123 | €26.30 | ✅ |
-| test_fattura_3.pdf | FornitoreC | Luce (chiusura) | IT012E00ABCDEF | €402.90 | ✅ |
-| test_bolletta_gas…pdf | FornitoreB | Gas | 01234567890123 | €49.51 | ✅ |
+| # | Fornitore | Tipo | Esito |
+|---|-----------|------|-------|
+| 1 | Fornitore A | Luce | ✅ |
+| 2 | Fornitore A | Gas | ✅ |
+| 3 | Fornitore B | Luce (chiusura) | ✅ |
+| 4 | Fornitore C | Gas | ✅ |
 
-Stesso intestatario (Mario Rossi, RSSMRA85M01H501Z), stesso POD con switch FornitoreC→FornitoreA rilevato.
+_I file di test sono immagazzinati in Supabase Storage (non nel repo) e contengono dati fittizi._
 
 ## Environment Variables
 

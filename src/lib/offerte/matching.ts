@@ -115,7 +115,7 @@ export interface MatchedOfferta {
 }
 
 /**
- * Find the best FornitoreA offerta for a given bill and estimate savings.
+ * Find the best offerta for a given bill and estimate savings.
  */
 export async function findBestOfferta(
   commodity: "luce" | "gas",

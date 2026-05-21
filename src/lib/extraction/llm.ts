@@ -35,8 +35,8 @@ SCHEMA JSON RICHIESTO:
     "coeff_correttivo_c": "number (solo gas)"
   },
   "contratto": {
-    "brand_commerciale": "string (es. FORNITOREA LUCE&GAS, FornitoreB, FornitoreC)",
-    "societa_vendita": "string (società legale, es. Societa Vendita S.p.A., Societa Vendita S.p.A.)",
+    "brand_commerciale": "string (es. FornitoreA Luce&Gas, FornitoreB, FornitoreC Energia)",
+    "societa_vendita": "string (società legale, es. Società Vendita S.p.A.)",
     "piva_venditore": "string",
     "mercato": "libero o tutela",
     "nome_offerta": "string",
@@ -95,10 +95,10 @@ REGOLE IMPORTANTI:
 - Il codice_fiscale DEVE essere esattamente 16 caratteri nel formato italiano
 - POD inizia sempre con IT seguito da 12 caratteri alfanumerici (es. IT012E00ABCDEF)
 - PDR è un numero di 14 cifre
-- brand_commerciale ≠ societa_vendita (es. "FornitoreA Luce&Gas" vs "Societa Vendita S.p.A.")
+- brand_commerciale ≠ societa_vendita (es. "FornitoreA Luce&Gas" vs "Società Vendita S.p.A.")
 - tipo_bolletta: "chiusura" se la bolletta indica cessazione/switch
 - Se c'è il Canone RAI, mettilo in voci_costo con categoria "altre_voci" e cod_iva "VF"
-- L'email in bolletta PUO' NON essere dell'intestatario (caso reale: bolletta FornitoreC)
+- L'email in bolletta PUO' NON essere dell'intestatario
 - Restituisci SOLO il JSON, nessun testo prima o dopo`;
 
 /**

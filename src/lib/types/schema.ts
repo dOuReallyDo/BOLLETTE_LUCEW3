@@ -130,7 +130,7 @@ export interface DocumentoOriginale {
   uploaded_at: string;
 }
 
-// Offerte FornitoreA (mirrors Supabase "offerte" table — v2 from Excel May 2026)
+// Offerte (mirrors Supabase "offerte" table — v2 from Excel May 2026)
 export interface Offerta {
   id: string;
   codice_offerta: string;

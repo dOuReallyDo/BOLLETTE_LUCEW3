@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
       hash_sha256: hash,
     });
 
-    // ── 9. Find best FornitoreA offerta and compute proposal ──────────────
+    // ── 9. Find best offerta and compute proposal ──────────────
     const commodity = validated.fornitura.tipo_fornitura; // "luce" | "gas"
     const totaleDaPagare = validated.bolletta.totale_da_pagare || 0;
     const costoMensileCorrente = computeMonthlyBillAmount(
