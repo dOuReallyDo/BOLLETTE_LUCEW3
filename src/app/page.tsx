@@ -423,7 +423,7 @@ export default function Home() {
         {step === "upload" && (
           <div className="bg-white/10 backdrop-blur rounded-2xl p-8 text-center">
             <h2 className="text-white text-2xl font-bold mb-2">
-              Carica la tua bolletta
+              Inviaci la tua bolletta
             </h2>
             <p className="text-gray-300 mb-8">
               Carica il PDF o una foto della tua bolletta luce o gas e scopri quanto puoi risparmiare
@@ -466,9 +466,42 @@ export default function Home() {
         {step === "processing" && (
           <div className="bg-white/10 backdrop-blur rounded-2xl p-12 text-center">
             <div className="mb-8">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#FF6B00]/20 flex items-center justify-center">
-                <svg className="w-10 h-10 text-[#FF6B00] animate-spin" style={{ animationDuration: "2s" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              <div className="relative w-28 h-28 mx-auto mb-6">
+                {/* Glow halo */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-400/25 via-amber-500/15 to-yellow-300/10 blur-md animate-pulse" />
+                {/* Document icon */}
+                <div className="relative w-20 h-24 mx-auto mt-2 rounded-lg bg-gradient-to-br from-white/90 to-gray-200/90 shadow-lg shadow-black/30 border border-white/50 flex flex-col items-center justify-center overflow-hidden">
+                  <div className="w-10 h-[2px] bg-gray-300 rounded my-[3px]" />
+                  <div className="w-8 h-[2px] bg-gray-300 rounded my-[3px]" />
+                  <div className="w-10 h-[2px] bg-gray-300 rounded my-[3px]" />
+                  <div className="w-6 h-[2px] bg-gray-300 rounded my-[3px]" />
+                </div>
+                {/* Lightning bolt orbiting */}
+                <svg className="absolute inset-0 w-28 h-28 animate-spin" style={{ animationDuration: "3s" }} viewBox="0 0 112 112" fill="none">
+                  <defs>
+                    <linearGradient id="boltGrad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#FF6B00" />
+                      <stop offset="50%" stopColor="#FFB347" />
+                      <stop offset="100%" stopColor="#FFD700" />
+                    </linearGradient>
+                    <filter id="boltGlow">
+                      <feGaussianBlur stdDeviation="2" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  <g filter="url(#boltGlow)">
+                    <path d="M88 6 L82 20 L90 18 L82 38" stroke="url(#boltGrad)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                    <path d="M85 8 L83 16 L88 15 L83 28" stroke="#FFD700" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.7" />
+                  </g>
+                </svg>
+                {/* Second lightning — opposite side, slower */}
+                <svg className="absolute inset-0 w-28 h-28 animate-spin" style={{ animationDuration: "4.5s", animationDirection: "reverse" }} viewBox="0 0 112 112" fill="none">
+                  <g filter="url(#boltGlow)">
+                    <path d="M18 70 L24 82 L16 80 L24 98" stroke="url(#boltGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.6" />
+                  </g>
                 </svg>
               </div>
               <h2 className="text-white text-xl font-bold mb-2">

@@ -142,4 +142,5 @@ npm run dev
 | F3 — GDPR & contatti | ✅ Completata | Step contatto + 3 consensi |
 | F4 — Proposta & matching | ✅ Completata | Offerte reali Excel, spread/CCV/sconto |
 | F5 — UX polish & deploy | ✅ Completata | Countdown, PDF, conferma download |
+| F5b — Validazione CF & UX contatti | ✅ Completata | CF check digit + normalizzazione OCR, email gestore filtrata, hint +39 |
 | F6 — Produzione | ⬜ Da fare | Resend DNS, dominio, informativa privacy completa |
