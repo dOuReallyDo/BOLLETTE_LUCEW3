@@ -333,8 +333,9 @@ export default function Home() {
       doc.line(margin, y, margin + contentW, y);
       y += 7;
 
+      const energiaLabel = d.fornitura.tipo_fornitura === "luce" ? "Quota energia" : "Quota materia gas";
       const costRows: [string, string][] = [
-        ["Quota energia", `\u20AC${dc.prezzo_energia_mensile.toFixed(2)}/mese`],
+        [energiaLabel, `\u20AC${dc.prezzo_energia_mensile.toFixed(2)}/mese`],
         ["CCV (commercializzazione)", `\u20AC${dc.ccv_mensile.toFixed(2)}/mese`],
       ];
       if (dc.sconto_mese > 0) {
@@ -414,7 +415,7 @@ export default function Home() {
         <div className="max-w-2xl mx-auto flex items-center gap-3">
           <button
             onClick={() => { setStep("upload"); setError(""); setExtractedData(null); setEditedData(null); setProposal(null); setFile(null); setElapsedSeconds(0); setConfirmedDownload(false); }}
-            className="text-left"
+            className="text-left cursor-pointer"
           >
             <h1 className="text-white font-bold text-xl leading-tight">Luce & Gas</h1>
             <p className="text-orange-100 text-xs">Scopri quanto puoi risparmiare</p>
@@ -817,7 +818,7 @@ export default function Home() {
               {proposal.nome}, ecco la tua offerta! 🎉
             </h2>
             <p className="text-gray-300 mb-8">
-              Risparmio stimato sulla tua fornitura {editedData.fornitura.tipo_fornitura}
+              Risparmio stimato sulla tua fornitura {editedData.fornitura.tipo_fornitura === "luce" ? "di energia elettrica" : "di gas naturale"}
             </p>
 
             {/* Current vs Proposed */}
@@ -882,10 +883,10 @@ export default function Home() {
                 )}
                 <div className="flex justify-between">
                   <span className="text-gray-400">Tipo fornitura</span>
-                  <span className="text-white">{proposal.offerta.tipo === "luce" ? "Energia elettrica" : "Gas naturale"}</span>
+                  <span className="text-white">{editedData.fornitura.tipo_punto === "POD" ? "Energia elettrica (POD)" : "Gas naturale (PDR)"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">POD/PDR</span>
+                  <span className="text-gray-400">Codice punto</span>
                   <span className="text-white">{editedData.fornitura.codice_punto}</span>
                 </div>
                 <div className="flex justify-between">
@@ -901,7 +902,7 @@ export default function Home() {
                 <h3 className="text-white font-semibold mb-3">Dettaglio costi stimati</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Quota energia</span>
+                    <span className="text-gray-400">{editedData.fornitura.tipo_fornitura === "luce" ? "Quota energia" : "Quota materia gas"}</span>
                     <span className="text-white">€{proposal.offerta.dettagli_costo.prezzo_energia_mensile.toFixed(2)}/mese</span>
                   </div>
                   <div className="flex justify-between">

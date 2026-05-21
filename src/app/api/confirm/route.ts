@@ -214,7 +214,7 @@ export async function POST(req: NextRequest) {
       risparmioStimato = Math.round(costoMensileCorrente * 0.15 * 100) / 100;
       prezzoProposto = Math.round((costoMensileCorrente - risparmioStimato) * 100) / 100;
       offertaProposta = {
-        nome: "FornitoreA Luce&Gas Per Te",
+        nome: "Offerta Per Te",
         tipo: commodity === "luce" ? "energia" : "gas",
         prezzo_corrente: costoMensileCorrente,
         prezzo_proposto: prezzoProposto,
@@ -266,7 +266,7 @@ export async function POST(req: NextRequest) {
         nome: validated.cliente.nome,
         cognome: validated.cliente.cognome,
         offerta: {
-          nome: (offertaProposta.nome as string) || "Luce&Gas Per Te",
+          nome: (offertaProposta.nome as string) || "Offerta Per Te",
           tipo: commodity === "luce" ? "energia" : "gas",
           cannot_beat: !!offertaProposta.cannot_beat,
           fornitore_attuale: validated.contratto.brand_commerciale || validated.contratto.societa_vendita || "",
