@@ -16,18 +16,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
+  const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
+    // Skip auth check for login page
+    if (pathname === "/admin/login" || pathname === "/admin") {
+      setLoading(false);
+      return;
+    }
     supabaseBrowser.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.push("/admin/login");
-      else setLoading(false);
+      if (!user) {
+        router.push("/admin/login");
+      } else {
+        setAuthed(true);
+      }
+      setLoading(false);
     });
-  }, [router]);
+  }, [pathname, router]);
 
-  const handleLogout = async () => {
-    await supabaseBrowser.auth.signOut();
-    router.push("/admin/login");
-  };
+  // Login page renders without sidebar
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
+  // Redirect /admin to /admin/dashboard
+  if (pathname === "/admin") {
+    return null;
+  }
 
   if (loading) {
     return (
@@ -37,15 +52,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  if (pathname === "/admin/login") return <>{children}</>;
+  if (!authed) {
+    return null;
+  }
+
+  const handleLogout = async () => {
+    await supabaseBrowser.auth.signOut();
+    router.push("/admin/login");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a1a2e] to-[#16213e] flex">
       {/* Sidebar */}
       <aside className="w-56 bg-[#111827] border-r border-white/10 flex flex-col fixed h-full">
         <div className="p-4 border-b border-white/10">
-          <h1 className="text-[#FF6B00] font-bold text-lg">Luce & Gas</h1>
-          <p className="text-gray-500 text-xs">Admin Dashboard</p>
+          <Link href="/admin/dashboard" className="block">
+            <h1 className="text-[#FF6B00] font-bold text-lg">Luce & Gas</h1>
+            <p className="text-gray-500 text-xs">Admin Dashboard</p>
+          </Link>
         </div>
         <nav className="flex-1 p-2 space-y-1">
           {navItems.map((item) => (
