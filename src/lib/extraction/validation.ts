@@ -5,6 +5,17 @@ const nullableString = z.string().nullable().optional().transform(v => v ?? unde
 const nullableNumber = z.number().nullable().optional().transform(v => v ?? undefined);
 const nullableBoolean = z.boolean().nullable().optional().transform(v => v ?? undefined);
 
+// Helper: sanitizza campi data — scarta valori non-data come "Indeterminata", "N/A", etc.
+const sanitizeDate = z.string().nullable().optional().transform(v => {
+  if (!v) return undefined;
+  const trimmed = v.trim();
+  // Accetta solo formato YYYY-MM-DD o YYYY/MM/DD o DD/MM/YYYY (poi normalizzato)
+  if (/^\d{4}[-/]\d{2}[-/]\d{2}$/.test(trimmed) || /^\d{2}[-/]\d{2}[-/]\d{4}$/.test(trimmed)) {
+    return trimmed;
+  }
+  return undefined; // "Indeterminata", "N/A", etc. → undefined
+});
+
 const clienteSchema = z.object({
   codice_fiscale: z.string().min(6, "CF troppo corto — verifica nel passo successivo"),
   nome: z.string().min(1),
@@ -43,8 +54,8 @@ const contrattoSchema = z.object({
   codice_offerta: nullableString,
   tipo_prezzo: z.enum(["fisso", "variabile", "monorario"]).nullable().optional().transform(v => v ?? undefined),
   indice_riferimento: nullableString,
-  data_decorrenza: nullableString,
-  data_scadenza_contratto: nullableString,
+  data_decorrenza: sanitizeDate,
+  data_scadenza_contratto: sanitizeDate,
   penali_recesso: nullableBoolean,
   metodo_pagamento: nullableString,
   codice_utenza: nullableString,
@@ -53,15 +64,15 @@ const contrattoSchema = z.object({
 const bollettaSchema = z.object({
   numero_fattura: nullableString,
   tipo_bolletta: z.enum(["periodica", "chiusura", "conguaglio"]),
-  data_emissione: nullableString,
-  periodo_dal: nullableString,
-  periodo_al: nullableString,
+  data_emissione: sanitizeDate,
+  periodo_dal: sanitizeDate,
+  periodo_al: sanitizeDate,
   consumo_fatturato: nullableNumber,
   unita_consumo: z.enum(["Smc", "kWh"]).nullable().optional().transform(v => v ?? undefined),
   consumo_annuo: nullableNumber,
   totale_bolletta: nullableNumber,
   totale_da_pagare: z.number().nullable().optional().transform(v => v ?? 0),
-  data_scadenza_pagamento: nullableString,
+  data_scadenza_pagamento: sanitizeDate,
   stato_pagamenti: nullableString,
 });
 
