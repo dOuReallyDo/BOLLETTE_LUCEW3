@@ -3,11 +3,13 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import type { ValidatedBillData } from "@/lib/extraction/validation";
 import { validaCodiceFiscale } from "@/lib/codice-fiscale";
+import { useTheme } from "@/lib/theme";
 import jsPDF from "jspdf";
 
 type Step = "upload" | "processing" | "confirm" | "contact" | "cannot_beat" | "proposal" | "error";
 
 export default function Home() {
+  const { theme, toggle: toggleTheme } = useTheme();
   const [step, setStep] = useState<Step>("upload");
   const [file, setFile] = useState<File | null>(null);
   const [extractedData, setExtractedData] = useState<ValidatedBillData | null>(null);
@@ -412,13 +414,24 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-[#1a1a2e] to-[#16213e]">
       {/* Header — sticky */}
       <header className="sticky top-0 z-50 bg-[#FF6B00] py-5 px-6 shadow-lg">
-        <div className="max-w-2xl mx-auto flex items-center gap-3">
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
           <button
             onClick={() => { setStep("upload"); setError(""); setExtractedData(null); setEditedData(null); setProposal(null); setFile(null); setElapsedSeconds(0); setConfirmedDownload(false); }}
             className="text-left cursor-pointer"
           >
             <h1 className="text-white font-bold text-xl leading-tight">Luce & Gas</h1>
             <p className="text-orange-100 text-xs">Scopri quanto puoi risparmiare</p>
+          </button>
+          <button
+            onClick={toggleTheme}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+            title={theme === "dark" ? "Tema chiaro" : "Tema scuro"}
+          >
+            {theme === "dark" ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            )}
           </button>
         </div>
       </header>

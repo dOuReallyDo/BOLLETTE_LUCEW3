@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "@/lib/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,14 +25,18 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="it"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      data-theme="dark"
     >
-      <body className="min-h-full flex flex-col">{children}
-        <footer className="text-gray-500 text-[10px] text-center py-3 px-4 leading-snug">
-          Web app a solo scopo dimostrativo — qualsiasi uso non espressamente autorizzato dal proprietario non è consentito.
-          Le offerte generate sono puramente dimostrative e non costituiscono proposte commerciali reali.
-        </footer>
+      <body className="min-h-full flex flex-col">
+        <ThemeProvider>
+          {children}
+          <footer className="text-[var(--text-dim)] text-[10px] text-center py-3 px-4 leading-snug">
+            Web app a solo scopo dimostrativo — qualsiasi uso non espressamente autorizzato dal proprietario non è consentito.
+            Le offerte generate sono puramente dimostrative e non costituiscono proposte commerciali reali.
+          </footer>
+        </ThemeProvider>
       </body>
     </html>
   );
