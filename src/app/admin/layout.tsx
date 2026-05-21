@@ -100,6 +100,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Main content */}
       <main className="ml-56 flex-1 p-6 min-h-screen">
+        {/* Global dark style for select dropdowns */}
+        <style jsx global>{`
+          select option {
+            background-color: #1a1a2e;
+            color: white;
+          }
+          input[type="number"]::-webkit-inner-spin-button,
+          input[type="number"]::-webkit-outer-spin-button {
+            opacity: 1;
+          }
+        `}</style>
         {children}
       </main>
     </div>

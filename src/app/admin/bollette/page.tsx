@@ -20,6 +20,9 @@ interface Bolletta {
 type SortKey = "numero_fattura" | "totale_da_pagare" | "tipo_bolletta" | "created_at";
 type SortDir = "asc" | "desc";
 
+const fmtDate = (d: string) => new Date(d).toLocaleDateString("it-IT");
+const fmtTime = (d: string) => new Date(d).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+
 export default function AdminBollettePage() {
   const [bollette, setBollette] = useState<Bolletta[]>([]);
   const [total, setTotal] = useState(0);
@@ -103,7 +106,7 @@ export default function AdminBollettePage() {
         <select
           value={tipo}
           onChange={(e) => { setTipo(e.target.value); setPage(1); }}
-          className="bg-white/10 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none"
+          className="bg-[#1a1a2e] text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none"
         >
           <option value="">Tutti i tipi</option>
           <option value="periodica">Periodica</option>
@@ -115,14 +118,14 @@ export default function AdminBollettePage() {
           value={minTotale}
           onChange={(e) => setMinTotale(e.target.value)}
           placeholder="Min €"
-          className="w-24 bg-white/10 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none"
+          className="w-24 bg-[#1a1a2e] text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none"
         />
         <input
           type="number"
           value={maxTotale}
           onChange={(e) => setMaxTotale(e.target.value)}
           placeholder="Max €"
-          className="w-24 bg-white/10 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none"
+          className="w-24 bg-[#1a1a2e] text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none"
         />
         <button
           onClick={() => { setPage(1); fetchData(1); }}
@@ -153,6 +156,7 @@ export default function AdminBollettePage() {
                 <th className="text-right p-3 cursor-pointer hover:text-white" onClick={() => handleSort("totale_da_pagare")}>Totale <SortIcon col="totale_da_pagare" /></th>
                 <th className="text-center p-3">Doc</th>
                 <th className="text-right p-3 cursor-pointer hover:text-white" onClick={() => handleSort("created_at")}>Data <SortIcon col="created_at" /></th>
+                <th className="text-right p-3">Ora</th>
               </tr>
             </thead>
             <tbody>
@@ -186,7 +190,8 @@ export default function AdminBollettePage() {
                       );
                     })()}
                   </td>
-                  <td className="p-3 text-gray-400 text-right text-xs">{new Date(b.created_at).toLocaleDateString("it-IT")}</td>
+                  <td className="p-3 text-gray-400 text-right text-xs">{fmtDate(b.created_at)}</td>
+                  <td className="p-3 text-gray-500 text-right text-xs">{fmtTime(b.created_at)}</td>
                 </tr>
               ))}
             </tbody>

@@ -10,12 +10,18 @@ interface Proposta {
   prezzo_proposto: number;
   risparmio_stimato: number;
   email_contatto: string | null;
+  email_inviata_a: string | null;
+  inviata_at: string | null;
+  vista_at: string | null;
+  accettata_at: string | null;
+  scade_at: string | null;
   created_at: string;
+  codice_fiscale: string;
   clienti: { nome: string; cognome: string; codice_fiscale: string } | null;
   offerta_proposta: Record<string, unknown> | null;
 }
 
-type SortKey = "codice_redenzione" | "stato" | "risparmio_stimato" | "created_at";
+type SortKey = "codice_redenzione" | "stato" | "risparmio_stimato" | "created_at" | "scade_at";
 type SortDir = "asc" | "desc";
 
 const statoColors: Record<string, string> = {
@@ -24,6 +30,10 @@ const statoColors: Record<string, string> = {
   accettata: "bg-green-500/20 text-green-300",
   scaduta: "bg-gray-500/20 text-gray-400",
 };
+
+const fmtDate = (d: string | null) => d ? new Date(d).toLocaleDateString("it-IT") : "—";
+const fmtTime = (d: string | null) => d ? new Date(d).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) : "—";
+const fmtDateTime = (d: string | null) => d ? `${fmtDate(d)} ${fmtTime(d)}` : "—";
 
 export default function AdminPropostePage() {
   const [proposte, setProposte] = useState<Proposta[]>([]);
@@ -68,6 +78,7 @@ export default function AdminPropostePage() {
       case "stato": return dir * a.stato.localeCompare(b.stato);
       case "risparmio_stimato": return dir * (a.risparmio_stimato - b.risparmio_stimato);
       case "created_at": return dir * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      case "scade_at": return dir * ((a.scade_at ? new Date(a.scade_at).getTime() : 0) - (b.scade_at ? new Date(b.scade_at).getTime() : 0));
       default: return 0;
     }
   });
@@ -95,7 +106,7 @@ export default function AdminPropostePage() {
         <select
           value={stato}
           onChange={(e) => { setStato(e.target.value); setPage(1); }}
-          className="bg-white/10 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none"
+          className="bg-[#1a1a2e] text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none"
         >
           <option value="">Tutti gli stati</option>
           <option value="inviata">Inviata</option>
@@ -125,8 +136,10 @@ export default function AdminPropostePage() {
                 <th className="text-left p-3">Cliente</th>
                 <th className="text-left p-3 cursor-pointer hover:text-white" onClick={() => handleSort("stato")}>Stato <SortIcon col="stato" /></th>
                 <th className="text-right p-3 cursor-pointer hover:text-white" onClick={() => handleSort("risparmio_stimato")}>Risparmio <SortIcon col="risparmio_stimato" /></th>
-                <th className="text-left p-3">Email</th>
-                <th className="text-right p-3 cursor-pointer hover:text-white" onClick={() => handleSort("created_at")}>Data <SortIcon col="created_at" /></th>
+                <th className="text-left p-3">Email invio</th>
+                <th className="text-center p-3">Mail inviata</th>
+                <th className="text-left p-3">Scadenza</th>
+                <th className="text-right p-3 cursor-pointer hover:text-white" onClick={() => handleSort("created_at")}>Creata <SortIcon col="created_at" /></th>
               </tr>
             </thead>
             <tbody>
@@ -146,24 +159,39 @@ export default function AdminPropostePage() {
                     </td>
                     <td className="p-3 text-right">
                       {p.risparmio_stimato > 0 ? (
-                        <span className="text-green-400">€{p.risparmio_stimato.toFixed(2)}/mese</span>
+                        <span className="text-green-400">€{p.risparmio_stimato.toFixed(2)}/m</span>
                       ) : (
                         <span className="text-gray-500">—</span>
                       )}
                     </td>
-                    <td className="p-3 text-gray-300 text-xs">{p.email_contatto || "—"}</td>
-                    <td className="p-3 text-gray-400 text-right text-xs">{new Date(p.created_at).toLocaleDateString("it-IT")}</td>
+                    <td className="p-3 text-gray-300 text-xs">{p.email_inviata_a || p.email_contatto || "—"}</td>
+                    <td className="p-3 text-center">
+                      {p.inviata_at ? (
+                        <span className="text-green-400 text-xs">✓ {fmtTime(p.inviata_at)}</span>
+                      ) : (
+                        <span className="text-red-400 text-xs">✗</span>
+                      )}
+                    </td>
+                    <td className="p-3 text-gray-300 text-xs">{fmtDate(p.scade_at)}</td>
+                    <td className="p-3 text-gray-400 text-right text-xs">{fmtDateTime(p.created_at)}</td>
                   </tr>
-                  {expanded === p.id && p.offerta_proposta && (
+                  {expanded === p.id && (
                     <tr key={`${p.id}-detail`}>
-                      <td colSpan={6} className="p-4 bg-white/5">
+                      <td colSpan={8} className="p-4 bg-white/5">
                         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-                          <div><span className="text-gray-400">Attuale:</span> <span className="text-white">€{p.prezzo_corrente.toFixed(2)}/mese</span></div>
-                          <div><span className="text-gray-400">Proposto:</span> <span className="text-white">€{p.prezzo_proposto.toFixed(2)}/mese</span></div>
+                          <div><span className="text-gray-400">Prezzo attuale:</span> <span className="text-white">€{p.prezzo_corrente.toFixed(2)}/mese</span></div>
+                          <div><span className="text-gray-400">Prezzo proposto:</span> <span className="text-white">€{p.prezzo_proposto.toFixed(2)}/mese</span></div>
                           <div><span className="text-gray-400">Offerta:</span> <span className="text-white">{(p.offerta_proposta as Record<string, unknown>)?.nome as string || "—"}</span></div>
                           <div><span className="text-gray-400">Fornitore attuale:</span> <span className="text-white">{(p.offerta_proposta as Record<string, unknown>)?.fornitore_attuale as string || "—"}</span></div>
                           <div><span className="text-gray-400">Offerta attuale:</span> <span className="text-white">{(p.offerta_proposta as Record<string, unknown>)?.offerta_attuale as string || "—"}</span></div>
                           <div><span className="text-gray-400">Cannot beat:</span> <span className={(p.offerta_proposta as Record<string, unknown>)?.cannot_beat ? "text-yellow-400" : "text-gray-500"}>{(p.offerta_proposta as Record<string, unknown>)?.cannot_beat ? "Sì" : "No"}</span></div>
+                          <div><span className="text-gray-400">Email contatto:</span> <span className="text-white">{p.email_contatto || "—"}</span></div>
+                          <div><span className="text-gray-400">Mail inviata a:</span> <span className="text-white">{p.email_inviata_a || "—"}</span></div>
+                          <div><span className="text-gray-400">Inviata il:</span> <span className="text-white">{fmtDateTime(p.inviata_at)}</span></div>
+                          <div><span className="text-gray-400">Vista il:</span> <span className="text-white">{fmtDateTime(p.vista_at)}</span></div>
+                          <div><span className="text-gray-400">Accettata il:</span> <span className="text-white">{fmtDateTime(p.accettata_at)}</span></div>
+                          <div><span className="text-gray-400">Scade il:</span> <span className="text-white">{fmtDateTime(p.scade_at)}</span></div>
+                          <div><span className="text-gray-400">Link proposta:</span> <a href={`/proposal?code=${p.codice_redenzione}`} target="_blank" className="text-[#FF6B00] hover:underline">/proposal?code={p.codice_redenzione}</a></div>
                         </div>
                       </td>
                     </tr>
