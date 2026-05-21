@@ -228,7 +228,7 @@ export default function Home() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
-    doc.text("Luce & Gas POC", margin, 18);
+    doc.text("Luce & Gas", margin, 18);
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
     doc.text(`Proposta personalizzata per ${p.nome} ${p.cognome}`, margin, 30);
@@ -384,19 +384,27 @@ export default function Home() {
     doc.text(p.codice_redenzione, pageW / 2, y + 19, { align: "center" });
     y += 34;
 
+    // ── FAC SIMILE watermark (diagonal) ─────────────────────
+    doc.setTextColor(180, 180, 180);
+    doc.setFontSize(72);
+    doc.setFont("helvetica", "bold");
+    const cx = pageW / 2;
+    const cy = 140;
+    doc.text("FAC SIMILE", cx, cy, { angle: 45, align: "center" });
+
     // ── Footer ─────────────────────────────────────────────
     doc.setTextColor(156, 163, 175);
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     const footerLines = [
-      "Luce&Gas POC \u2014 Dimostrativo interno \u2014 Proposta non vincolante",
+      "Web app a solo scopo dimostrativo \u2014 Le offerte generate sono puramente dimostrative e non costituiscono proposte commerciali reali.",
       "Codice valido per 30 giorni",
     ];
     footerLines.forEach((line, i) => {
       doc.text(line, pageW / 2, y + i * 4.5, { align: "center" });
     });
 
-    doc.save(`proposta-fornitorea-${p.codice_redenzione}.pdf`);
+    doc.save(`proposta-offerta-luce-gas-${p.codice_redenzione}.pdf`);
   };
 
   return (
@@ -408,7 +416,7 @@ export default function Home() {
             onClick={() => { setStep("upload"); setError(""); setExtractedData(null); setEditedData(null); setProposal(null); setFile(null); setElapsedSeconds(0); setConfirmedDownload(false); }}
             className="text-left"
           >
-            <h1 className="text-white font-bold text-xl leading-tight">Luce & Gas POC</h1>
+            <h1 className="text-white font-bold text-xl leading-tight">Luce & Gas</h1>
             <p className="text-orange-100 text-xs">Scopri quanto puoi risparmiare</p>
           </button>
         </div>
@@ -499,7 +507,7 @@ export default function Home() {
                   <div className="w-5 h-[2px] bg-gray-300 rounded my-[2px]" />
                 </div>
                 {/* Magnifying glass scanning: L→R then T→B, loop */}
-                <div className="absolute inset-0" style={{ animation: 'scanLoop 6s ease-in-out infinite' }}>
+                <div className="absolute inset-0" style={{ animation: 'scanLoop 8s ease-in-out infinite' }}>
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="drop-shadow-lg">
                     <circle cx="10" cy="10" r="7" stroke="#FF6B00" strokeWidth="2" fill="rgba(255,107,0,0.08)" />
                     <circle cx="10" cy="10" r="5" stroke="#FFB347" strokeWidth="0.8" fill="none" opacity="0.5" />
@@ -764,7 +772,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-400 text-lg leading-none mt-0.5">✓</span>
-                  <span><span className="text-white font-medium">App e assistenza FornitoreA</span> — gestisci tutto dal telefono, niente code, niente carte bollate</span>
+                  <span><span className="text-white font-medium">App e assistenza</span> — gestisci tutto dal telefono, niente code, niente carte bollate</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-green-400 text-lg leading-none mt-0.5">✓</span>
@@ -781,7 +789,7 @@ export default function Home() {
               <p className="text-gray-400 text-xs leading-relaxed italic">
                 &ldquo;Sinceramente? Quando il prezzo del competitor è questo, noi festeggiamo per te e ci mettiamo a studiare offerte migliori. Se le cose dovessero cambiare — e nel mercato energia cambiano sempre — saremo i primi a farti sapere che abbiamo qualcosa da urlo.&rdquo;
               </p>
-              <p className="text-[#FF6B00] text-xs mt-2 font-semibold">— Il team FornitoreA Luce&Gas 🧡</p>
+              <p className="text-[#FF6B00] text-xs mt-2 font-semibold">— Il team Luce & Gas 🧡</p>
             </div>
 
             {/* CTA */}

@@ -99,7 +99,7 @@ export default function ProposalPage() {
     <div className="min-h-screen bg-gradient-to-b from-[#1a1a2e] to-[#16213e]">
       <header className="bg-[#FF6B00] py-5 px-6 shadow-lg">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <h1 className="text-white font-bold text-xl">Luce & Gas POC</h1>
+          <h1 className="text-white font-bold text-xl">Luce & Gas</h1>
         </div>
       </header>
 
