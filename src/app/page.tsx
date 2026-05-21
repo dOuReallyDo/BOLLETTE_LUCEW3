@@ -532,13 +532,8 @@ export default function Home() {
                     onChange={(v) => {
                       updateField("cliente.codice_fiscale", v);
                     }}
-                    error={cfValidation && !cfValidation.valid ? cfValidation.error : undefined}
+                    error={cfValidation && !cfValidation.valid ? "Inserire codice fiscale valido" : undefined}
                   />
-                  {cfValidation && cfValidation.valid && cfValidation.normalized && cfValidation.normalized !== editedData.cliente.codice_fiscale.trim().toUpperCase() && (
-                    <p className="text-green-400 text-xs mt-1">
-                      ✓ Codice Fiscale corretto dopo normalizzazione OCR (O→0, I→1)
-                    </p>
-                  )}
                   {cfValidation && cfValidation.valid && (
                     <p className="text-green-400 text-xs mt-1">✓ Codice Fiscale valido</p>
                   )}
