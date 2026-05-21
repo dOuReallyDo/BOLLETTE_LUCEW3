@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 
     let query = supabaseAdmin
       .from("bollette")
-      .select("id, numero_fattura, tipo_bolletta, totale_da_pagare, periodo_dal, periodo_al, created_at, clienti(nome, cognome, codice_fiscale), forniture(tipo_fornitura, codice_punto), contratti(brand_commerciale, nome_offerta)", { count: "exact" })
+      .select("id, numero_fattura, tipo_bolletta, totale_da_pagare, periodo_dal, periodo_al, created_at, codice_fiscale, clienti(nome, cognome, codice_fiscale), forniture(tipo_fornitura, codice_punto), contratti(brand_commerciale, nome_offerta), documenti_originali(nome_file, mime_type, storage_path)", { count: "exact" })
       .order("created_at", { ascending: false });
 
     if (tipo) query = query.eq("tipo_bolletta", tipo);
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Client-side filter for fornitore since it's in contratti join
+    // Client-side filter for fornitore
     const filtered = fornitore
       ? data?.filter((b: Record<string, unknown>) => (b.contratti as Record<string, unknown>)?.brand_commerciale?.toString().toLowerCase().includes(fornitore.toLowerCase()))
       : data;

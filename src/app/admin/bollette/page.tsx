@@ -13,6 +13,7 @@ interface Bolletta {
   clienti: { nome: string; cognome: string; codice_fiscale: string } | null;
   forniture: { tipo_fornitura: string; codice_punto: string } | null;
   contratti: { brand_commerciale: string | null; nome_offerta: string | null } | null;
+  documenti_originali: { nome_file: string | null; mime_type: string | null; storage_path: string | null }[] | null;
 }
 
 export default function AdminBollettePage() {
@@ -76,9 +77,10 @@ export default function AdminBollettePage() {
                 <th className="text-left p-3">Cliente</th>
                 <th className="text-left p-3">Fornitore</th>
                 <th className="text-left p-3">Tipo</th>
-                <th className="text-left p-3">Fornitura</th>
-                <th className="text-right p-3">Totale</th>
-                <th className="text-right p-3">Data</th>
+                  <th className="text-left p-3">Fornitura</th>
+                  <th className="text-right p-3">Totale</th>
+                  <th className="text-center p-3">Doc</th>
+                  <th className="text-right p-3">Data</th>
               </tr>
             </thead>
             <tbody>
@@ -98,6 +100,21 @@ export default function AdminBollettePage() {
                   </td>
                   <td className="p-3 text-gray-300 text-xs">{b.forniture ? `${(b.forniture as Record<string, unknown>).tipo_fornitura}` : "—"}</td>
                   <td className="p-3 text-white text-right">€{(b.totale_da_pagare ?? 0).toFixed(2)}</td>
+                  <td className="p-3 text-center">
+                    {b.documenti_originali && b.documenti_originali.length > 0 ? (
+                      <a
+                        href={`https://rtrobuenxvjvgbtqndmh.supabase.co/storage/v1/object/public/bollette/${b.documenti_originali[0].storage_path}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#FF6B00] hover:text-[#FF8C42] text-sm"
+                        title={b.documenti_originali[0].nome_file || "Scarica"}
+                      >
+                        📎
+                      </a>
+                    ) : (
+                      <span className="text-gray-600">—</span>
+                    )}
+                  </td>
                   <td className="p-3 text-gray-400 text-right text-xs">{new Date(b.created_at).toLocaleDateString("it-IT")}</td>
                 </tr>
               ))}
