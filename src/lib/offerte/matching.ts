@@ -1,40 +1,107 @@
 /**
- * BillScan POC — Offerta matching & cost estimation (v2 — Excel May 2026)
+ * BillScan POC — Offerta matching & cost estimation (v3 — DB-driven ARERA params)
  *
  * Logic:
- * 1. Query Supabase "offerte" table filtered by commodity (gas/luce) and attivo=true
- * 2. Pick the best matching offerta based on the user's current contract type
- * 3. Estimate the monthly cost using real spread/CCV from the offerta
- * 4. Apply sconto multiservice if present
- * 5. Compare with the current monthly cost to compute savings
+ * 1. Fetch latest ARERA params from DB (PUN, PSV, trasporto, oneri, accise, IVA)
+ * 2. Query Supabase "offerte" table filtered by commodity (gas/luce) and attivo=true
+ * 3. Pick the best matching offerta based on the user's current contract type
+ * 4. Estimate the monthly cost using real spread/CCV from the offerta + live ARERA params
+ * 5. Apply sconto multiservice if present
+ * 6. Compare with the current monthly cost to compute savings
  */
 
 import { supabaseAdmin } from "@/lib/supabase/client";
 import type { Offerta } from "@/lib/types/schema";
 
-// ── Reference prices (ARERA PUN/PSV monthly averages for estimation) ──────
-// These are the commodity indices used in variable-price offers.
-// Updated periodically from ARERA/GME data.
-const PUN_MENSILE_KWH = 0.125; // ~€/kWh average PUN (electricity)
-const PSV_MENSILE_SMC = 0.45;  // ~€/Smc average PSV (gas)
+// ── Fallback defaults (used only if DB has no params yet) ──────────
+const DEFAULT_PUN_KWH = 0.1112;    // €/kWh (GME 22/05/2026)
+const DEFAULT_PSV_SMC = 0.43;      // €/Smc
+const DEFAULT_TRASPORTO_LUCE_KWH = 0.028;
+const DEFAULT_TRASPORTO_GAS_SMC = 0.042;
+const DEFAULT_FISSA_TRASPORTO_LUCE = 8.50;
+const DEFAULT_FISSA_TRASPORTO_GAS = 6.00;
+const DEFAULT_ONERI_LUCE_KWH = 0.035;
+const DEFAULT_ONERI_GAS_SMC = 0.007;
+const DEFAULT_ACCISA_LUCE_KWH = 0.022;
+const DEFAULT_ACCISA_GAS_SMC = 0.018;
+const DEFAULT_IVA_ENERGIA = 0.10;
+const DEFAULT_IVA_ALTRI = 0.22;
 
-// ── Quota trasporto & gestione (ARERA) ─────────────────────────────────────
-const TRASPORTO_GESTIONE_LUCE_KWH = 0.028; // €/kWh
-const TRASPORTO_GESTIONE_GAS_SMC = 0.042; // €/Smc
+// ── ARERA params from DB ────────────────────────────────────────
+interface AreraParams {
+  pun_kwh: number;
+  psv_smc: number;
+  trasporto_luce_kwh: number;
+  trasporto_gas_smc: number;
+  fissa_trasporto_luce: number;
+  fissa_trasporto_gas: number;
+  oneri_luce_kwh: number;
+  oneri_gas_smc: number;
+  accisa_luce_kwh: number;
+  accisa_gas_smc: number;
+  iva_energia: number;
+  iva_altri: number;
+}
 
-// ── Quota oneri di sistema ─────────────────────────────────────────────────
-const ONERI_LUCE_KWH = 0.035; // €/kWh (approximate for domestic)
-const ONERI_GAS_SMC = 0.007;  // €/Smc
+async function getAreraParams(): Promise<AreraParams> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("parametri_arera")
+      .select("*")
+      .order("mese_riferimento", { ascending: false })
+      .limit(2);
 
-// ── VAT ──────────────────────────────────────────────────────────────────────
-const IVA_ENERGIA = 0.10; // 10% on energy for domestic
-const IVA_ALTRI = 0.22;   // 22% on transport/oneri for domestic
+    if (error || !data || data.length === 0) {
+      console.log("⚠️ No ARERA params in DB, using defaults");
+      return getDefaults();
+    }
+
+    const luceRow = data.find((r: Record<string, unknown>) => r.commodity === "luce");
+    const gasRow = data.find((r: Record<string, unknown>) => r.commodity === "gas");
+    // Se c'è una riga "comune" con trasporto/oneri/accise, usala; altrimenti prendi dalla riga luce
+    const commonRow = data.find((r: Record<string, unknown>) => r.commodity === "comune") || luceRow;
+
+    return {
+      pun_kwh: Number(luceRow?.pun_mensile) || DEFAULT_PUN_KWH,
+      psv_smc: Number(gasRow?.psv_mensile) || DEFAULT_PSV_SMC,
+      trasporto_luce_kwh: Number(commonRow?.trasporto_luce_kwh) || DEFAULT_TRASPORTO_LUCE_KWH,
+      trasporto_gas_smc: Number(commonRow?.trasporto_gas_smc) || DEFAULT_TRASPORTO_GAS_SMC,
+      fissa_trasporto_luce: Number(commonRow?.quota_fissa_trasporto_luce) || DEFAULT_FISSA_TRASPORTO_LUCE,
+      fissa_trasporto_gas: Number(commonRow?.quota_fissa_trasporto_gas) || DEFAULT_FISSA_TRASPORTO_GAS,
+      oneri_luce_kwh: Number(commonRow?.oneri_luce_kwh) || DEFAULT_ONERI_LUCE_KWH,
+      oneri_gas_smc: Number(commonRow?.oneri_gas_smc) || DEFAULT_ONERI_GAS_SMC,
+      accisa_luce_kwh: Number(commonRow?.accisa_luce_kwh) || DEFAULT_ACCISA_LUCE_KWH,
+      accisa_gas_smc: Number(commonRow?.accisa_gas_smc) || DEFAULT_ACCISA_GAS_SMC,
+      iva_energia: Number(commonRow?.iva_energia) || DEFAULT_IVA_ENERGIA,
+      iva_altri: Number(commonRow?.iva_altri) || DEFAULT_IVA_ALTRI,
+    };
+  } catch {
+    return getDefaults();
+  }
+}
+
+function getDefaults(): AreraParams {
+  return {
+    pun_kwh: DEFAULT_PUN_KWH,
+    psv_smc: DEFAULT_PSV_SMC,
+    trasporto_luce_kwh: DEFAULT_TRASPORTO_LUCE_KWH,
+    trasporto_gas_smc: DEFAULT_TRASPORTO_GAS_SMC,
+    fissa_trasporto_luce: DEFAULT_FISSA_TRASPORTO_LUCE,
+    fissa_trasporto_gas: DEFAULT_FISSA_TRASPORTO_GAS,
+    oneri_luce_kwh: DEFAULT_ONERI_LUCE_KWH,
+    oneri_gas_smc: DEFAULT_ONERI_GAS_SMC,
+    accisa_luce_kwh: DEFAULT_ACCISA_LUCE_KWH,
+    accisa_gas_smc: DEFAULT_ACCISA_GAS_SMC,
+    iva_energia: DEFAULT_IVA_ENERGIA,
+    iva_altri: DEFAULT_IVA_ALTRI,
+  };
+}
 
 export interface MatchedOfferta {
   offerta: Offerta;
   costo_mensile_stimato: number;
   risparmio_mensile: number;
-  cannot_beat: boolean; // true when FornitoreA can't beat the current offer on energy alone
+  cannot_beat: boolean;
   dettagli: {
     prezzo_energia_mensile: number;
     ccv_mensile: number;
@@ -49,22 +116,16 @@ export interface MatchedOfferta {
 
 /**
  * Find the best FornitoreA offerta for a given bill and estimate savings.
- *
- * Strategy:
- * - If the user is on a "tutela" contract → offer a PLACET or mercato libero
- * - If the user is on a "variabile" contract → prefer an offer with lower spread
- * - If the user is on a "fisso" contract → offer a "variabile" (typically cheaper)
- * - Always prefer the offer that gives the highest savings
- * - Prefer multiservice discounts (sconto_mese) when available
- *
- * Falls back to the cheapest offer if no savings found.
  */
 export async function findBestOfferta(
   commodity: "luce" | "gas",
-  consumoMensile: number, // in Smc or kWh
-  totaleMensileCorrente: number, // what the user currently pays per month
-  tipoPrezzoCorrente?: string, // "fisso" | "variabile" | "monorario" | "tutela"
+  consumoMensile: number,
+  totaleMensileCorrente: number,
+  tipoPrezzoCorrente?: string
 ): Promise<MatchedOfferta | null> {
+  // 0. Fetch live ARERA params from DB
+  const params = await getAreraParams();
+
   // 1. Fetch active offerte for this commodity
   const { data: offerte, error } = await supabaseAdmin
     .from("offerte")
@@ -78,7 +139,7 @@ export async function findBestOfferta(
 
   // 2. Score each offer and compute estimated monthly cost
   const candidates: MatchedOfferta[] = offerte.map((offerta: Offerta) => {
-    const result = estimateMonthlyCost(offerta, commodity, consumoMensile);
+    const result = estimateMonthlyCost(offerta, commodity, consumoMensile, params);
     const risparmio = Math.max(0, totaleMensileCorrente - result.costo_mensile_stimato);
     return {
       offerta,
@@ -89,19 +150,16 @@ export async function findBestOfferta(
     };
   });
 
-  // 3. Sort by savings desc, then by lowest cost
-  // Prefer multiservice (sconto_mese) as tiebreaker
+  // 3. Sort by savings desc, prefer multiservice tiebreaker
   const eligible = candidates.filter(
     (c) => c.risparmio_mensile > 0 || c.costo_mensile_stimato <= totaleMensileCorrente
   );
 
   const pool = eligible.length > 0 ? eligible : candidates;
-
   pool.sort((a, b) => {
     if (b.risparmio_mensile !== a.risparmio_mensile) {
       return b.risparmio_mensile - a.risparmio_mensile;
     }
-    // Tiebreaker: prefer offers with multiservice discount
     const scontoA = getMonthlyDiscount(a.offerta) || 0;
     const scontoB = getMonthlyDiscount(b.offerta) || 0;
     if (scontoB !== scontoA) return scontoB - scontoA;
@@ -109,7 +167,6 @@ export async function findBestOfferta(
   });
 
   const best = pool[0];
-  // Recalculate savings and cannot_beat flag if all offers are more expensive
   if (eligible.length === 0) {
     best.risparmio_mensile = Math.max(0, totaleMensileCorrente - best.costo_mensile_stimato);
     best.cannot_beat = true;
@@ -118,77 +175,62 @@ export async function findBestOfferta(
   return best;
 }
 
-/**
- * Get the monthly discount (sconto multiservice) for an offerta.
- */
 function getMonthlyDiscount(offerta: Offerta): number | null {
   if (offerta.commodity === "luce") return offerta.sconto_mese_luce ?? null;
   return offerta.sconto_mese_gas ?? null;
 }
 
 /**
- * Estimate the monthly cost for a given offerta and consumption level.
- *
- * Uses real spread from the offerta data (corr_var_lordo_eur_kwh / corr_var_eur_smc)
- * and real CCV (ccv_mensile from the offerte table).
- *
- * Structure of an Italian energy bill (simplified):
- *   1. Quota energia (PUN/PSV + spread × consumo + CCV)
- *   2. Quota trasporto e gestione contatore (ARERA regulated)
- *   3. Quota oneri di sistema (ARERA regulated)
- *   4. Imposte (accise)
- *   5. IVA
- *   6. Sconto multiservice (se presente)
+ * Estimate the monthly cost using live ARERA params from DB.
  */
 function estimateMonthlyCost(
   offerta: Offerta,
   commodity: "luce" | "gas",
-  consumoMensile: number
+  consumoMensile: number,
+  params: AreraParams
 ) {
   const isLuce = commodity === "luce";
-  const consumption = Math.max(consumoMensile, 1); // avoid zero
+  const consumption = Math.max(consumoMensile, 1);
 
   // ── 1. Quota energia ──────────────────────────────────────
   let prezzoEnergiaPerUnita: number;
 
   if (offerta.tipo_prezzo === "fisso") {
-    // For fixed offers, use a slight premium over variable
     prezzoEnergiaPerUnita = isLuce
-      ? PUN_MENSILE_KWH * 1.05
-      : PSV_MENSILE_SMC * 1.05;
+      ? params.pun_kwh * 1.05
+      : params.psv_smc * 1.05;
   } else {
-    // variabile or tutela: PUN/PSV + real spread from offerta
     const spread = isLuce
       ? (offerta.corr_var_lordo_eur_kwh ?? 0)
       : (offerta.corr_var_eur_smc ?? 0);
-    prezzoEnergiaPerUnita = (isLuce ? PUN_MENSILE_KWH : PSV_MENSILE_SMC) + spread;
+    prezzoEnergiaPerUnita = (isLuce ? params.pun_kwh : params.psv_smc) + spread;
   }
 
   const prezzoEnergiaMensile = prezzoEnergiaPerUnita * consumption;
 
-  // ── 2. CCV (Costi Commercializzazione Vendita) ─────────────
+  // ── 2. CCV ─────────────────────────────────────────────────
   const ccvMensile = offerta.ccv_mensile ?? (offerta.ccv_annuo ? offerta.ccv_annuo / 12 : isLuce ? 6.0 : 4.5);
 
-  // ── 3. Quota trasporto e gestione ───────────────────────────
+  // ── 3. Trasporto e gestione (from DB) ──────────────────────
   const trasportoMensile = isLuce
-    ? TRASPORTO_GESTIONE_LUCE_KWH * consumption + 8.5 // quota fissa ~€8.50/mese
-    : TRASPORTO_GESTIONE_GAS_SMC * consumption + 6.0; // quota fissa ~€6.00/mese
+    ? params.trasporto_luce_kwh * consumption + params.fissa_trasporto_luce
+    : params.trasporto_gas_smc * consumption + params.fissa_trasporto_gas;
 
-  // ── 4. Oneri di sistema ─────────────────────────────────────
+  // ── 4. Oneri (from DB) ──────────────────────────────────────
   const oneriMensile = isLuce
-    ? ONERI_LUCE_KWH * consumption
-    : ONERI_GAS_SMC * consumption;
+    ? params.oneri_luce_kwh * consumption
+    : params.oneri_gas_smc * consumption;
 
-  // ── 5. Accise (semplificate) ────────────────────────────────
+  // ── 5. Accise (from DB) ─────────────────────────────────────
   const accisaMensile = isLuce
-    ? 0.022 * consumption // ~€0.022/kWh accisa energia
-    : 0.018 * consumption; // ~€0.018/Smc accisa gas (sopra soglia minimi)
+    ? params.accisa_luce_kwh * consumption
+    : params.accisa_gas_smc * consumption;
 
-  // ── 6. IVA ──────────────────────────────────────────────────
+  // ── 6. IVA (from DB) ────────────────────────────────────────
   const imponibileEnergia = prezzoEnergiaMensile + ccvMensile;
-  const ivaEnergia = imponibileEnergia * IVA_ENERGIA;
+  const ivaEnergia = imponibileEnergia * params.iva_energia;
   const imponibileAltri = trasportoMensile + oneriMensile + accisaMensile;
-  const ivaAltri = imponibileAltri * IVA_ALTRI;
+  const ivaAltri = imponibileAltri * params.iva_altri;
   const ivaTotale = ivaEnergia + ivaAltri;
 
   // ── 7. Sconto multiservice ──────────────────────────────────
@@ -202,10 +244,9 @@ function estimateMonthlyCost(
     oneri_mensile: Math.round(oneriMensile * 100) / 100,
     accise_mensile: Math.round(accisaMensile * 100) / 100,
     iva_totale: Math.round(ivaTotale * 100) / 100,
-    totale_calcolato: 0, // placeholder, computed below
+    totale_calcolato: 0,
   };
 
-  // Totale = somma delle righe visibili (lo sconto è già detratto)
   dettagli.totale_calcolato = Math.max(0, Math.round(
     (dettagli.prezzo_energia_mensile +
      dettagli.ccv_mensile -
@@ -216,18 +257,14 @@ function estimateMonthlyCost(
      dettagli.iva_totale) * 100
   ) / 100);
 
-  const costoMensile = dettagli.totale_calcolato;
-
   return {
-    costo_mensile_stimato: costoMensile,
+    costo_mensile_stimato: dettagli.totale_calcolato,
     dettagli,
   };
 }
 
 /**
  * Compute the monthly bill amount from the bolletta data.
- * Uses the period to annualize and then monthlyize.
- * Falls back to totale_da_pagare if the period is not available.
  */
 export function computeMonthlyBillAmount(
   totaleDaPagare: number,
@@ -235,21 +272,17 @@ export function computeMonthlyBillAmount(
   periodoAl?: string
 ): number {
   if (!periodoDal || !periodoAl) {
-    // Assume bimestral bill (most common in Italy)
     return Math.round((totaleDaPagare / 2) * 100) / 100;
   }
-
   const start = new Date(periodoDal);
   const end = new Date(periodoAl);
   const daysDiff = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
   const months = Math.max(daysDiff / 30, 1);
-
   return Math.round((totaleDaPagare / months) * 100) / 100;
 }
 
 /**
- * Compute monthly consumption from annual consumption.
- * If only totale_da_pagare and unit are available, estimate from the bill.
+ * Compute monthly consumption.
  */
 export function computeMonthlyConsumption(
   consumoAnnuo?: number,
@@ -257,12 +290,9 @@ export function computeMonthlyConsumption(
   periodoDal?: string,
   periodoAl?: string
 ): number {
-  // Prefer annualized consumption divided by 12
   if (consumoAnnuo && consumoAnnuo > 0) {
     return Math.round((consumoAnnuo / 12) * 100) / 100;
   }
-
-  // Fall back to bill-period consumption monthlyized
   if (consumoFatturato && consumoFatturato > 0 && periodoDal && periodoAl) {
     const start = new Date(periodoDal);
     const end = new Date(periodoAl);
@@ -270,12 +300,8 @@ export function computeMonthlyConsumption(
     const months = Math.max(days / 30, 1);
     return Math.round((consumoFatturato / months) * 100) / 100;
   }
-
-  // Last resort: assume bimestral
   if (consumoFatturato && consumoFatturato > 0) {
     return Math.round((consumoFatturato / 2) * 100) / 100;
   }
-
-  // Sensible defaults for estimation
-  return 150; // 150 kWh/mese (luce) or 30 Smc/mese (gas) average domestic
+  return 150;
 }

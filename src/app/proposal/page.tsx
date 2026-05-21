@@ -158,7 +158,7 @@ export default function ProposalPage() {
                 </p>
               </div>
               <div className="bg-green-500/10 border border-green-400/30 rounded-xl p-5 text-center">
-                <p className="text-green-300 text-sm mb-1">Con FornitoreA paghi</p>
+                <p className="text-green-300 text-sm mb-1">Con noi paghi</p>
                 <p className="text-green-400 text-3xl font-bold">
                   €{proposal.offerta_proposta.prezzo_proposto.toFixed(2)}
                 </p>

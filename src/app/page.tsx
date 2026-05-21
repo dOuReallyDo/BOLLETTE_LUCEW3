@@ -198,7 +198,7 @@ export default function Home() {
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.text("Oggi paghi", margin, y);
-    doc.text("Con FornitoreA paghi", margin + contentW / 2 + 4, y);
+    doc.text("Con noi paghi", margin + contentW / 2 + 4, y);
     y += 2;
     doc.setDrawColor(200, 200, 200);
     doc.line(margin, y, margin + contentW, y);
@@ -732,7 +732,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="bg-green-500/10 border border-green-400/30 rounded-xl p-5 text-center">
-                <p className="text-green-300 text-sm mb-1">Con FornitoreA paghi</p>
+                <p className="text-green-300 text-sm mb-1">Con noi paghi</p>
                 <p className="text-green-400 text-3xl font-bold">
                   €{proposal.prezzo_proposto.toFixed(2)}
                 </p>
