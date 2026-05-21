@@ -5,7 +5,7 @@ import type { ValidatedBillData } from "@/lib/extraction/validation";
 import { validaCodiceFiscale } from "@/lib/codice-fiscale";
 import jsPDF from "jspdf";
 
-type Step = "upload" | "processing" | "confirm" | "contact" | "cannot_beat" | "proposal";
+type Step = "upload" | "processing" | "confirm" | "contact" | "cannot_beat" | "proposal" | "error";
 
 export default function Home() {
   const [step, setStep] = useState<Step>("upload");
@@ -139,7 +139,7 @@ export default function Home() {
       setStep("confirm");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Errore durante l'upload");
-      setStep("upload");
+      setStep("error");
     }
   }, []);
   const handleConfirm = async () => {
@@ -184,6 +184,7 @@ export default function Home() {
       if (!res.ok) {
         setError(json.error || "Errore durante il salvataggio");
         setSaving(false);
+        setStep("error");
         return;
       }
 
@@ -191,6 +192,7 @@ export default function Home() {
       setStep(json.proposal.offerta.cannot_beat ? "cannot_beat" : "proposal");
     } catch {
       setError("Errore di connessione");
+      setStep("error");
     } finally {
       setSaving(false);
     }
@@ -413,9 +415,31 @@ export default function Home() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8">
-        {error && (
-          <div className="bg-red-500/20 border border-red-400 text-red-200 p-4 rounded-lg mb-6">
-            {error}
+        {step === "error" && (
+          <div className="bg-white/10 backdrop-blur rounded-2xl p-8 text-center">
+            <div className="text-6xl mb-4">🙈</div>
+            <h2 className="text-white text-2xl font-bold mb-3">
+              Ops… qualcosa è andato storto
+            </h2>
+            <p className="text-gray-300 mb-4 leading-relaxed max-w-md mx-auto">
+              Ci dispiace moltissimo, ma in questo momento non riusciamo a formulare una proposta.
+              Probabilmente i nostri calcolatori si sono imbattuti in un dato che non si aspettavano
+              — il che, detto tra noi, capita anche ai migliori.
+            </p>
+            <p className="text-gray-400 text-sm mb-8 italic">
+              Ci scusiamo per il disagio. Ti chiediamo di riprovarci più tardi.
+            </p>
+            {error && (
+              <p className="text-gray-500 text-xs mb-6 font-mono break-all max-w-sm mx-auto">
+                {error}
+              </p>
+            )}
+            <button
+              onClick={() => { setStep("upload"); setError(""); setExtractedData(null); setEditedData(null); setProposal(null); setFile(null); setElapsedSeconds(0); setConfirmedDownload(false); }}
+              className="bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-4 px-8 rounded-xl transition-all text-lg"
+            >
+              ← Torna alla home e riprova
+            </button>
           </div>
         )}
 
