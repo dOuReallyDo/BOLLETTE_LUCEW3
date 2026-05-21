@@ -24,9 +24,15 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (request.nextUrl.pathname.startsWith("/admin")) {
-    // Allow login page without auth
-    if (request.nextUrl.pathname === "/admin/login") {
-      if (user) return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    // Allow access to login page and API routes without auth check in middleware
+    // (auth is verified client-side in layout + API routes verify session)
+    if (
+      request.nextUrl.pathname === "/admin/login" ||
+      request.nextUrl.pathname.startsWith("/admin/api/")
+    ) {
+      if (request.nextUrl.pathname === "/admin/login" && user) {
+        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+      }
       return supabaseResponse;
     }
     // All other /admin/* routes require auth

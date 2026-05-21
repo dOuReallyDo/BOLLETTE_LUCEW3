@@ -15,6 +15,9 @@ interface Proposta {
   offerta_proposta: Record<string, unknown> | null;
 }
 
+type SortKey = "codice_redenzione" | "stato" | "risparmio_stimato" | "created_at";
+type SortDir = "asc" | "desc";
+
 const statoColors: Record<string, string> = {
   inviata: "bg-yellow-500/20 text-yellow-300",
   vista: "bg-blue-500/20 text-blue-300",
@@ -30,6 +33,8 @@ export default function AdminPropostePage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("created_at");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
   const limit = 20;
 
   const fetchData = (p: number, s: string, q: string) => {
@@ -50,14 +55,35 @@ export default function AdminPropostePage() {
   useEffect(() => { fetchData(page, stato, search); }, [page, stato]);
 
   const handleSearch = () => { setPage(1); fetchData(1, stato, search); };
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("asc"); }
+  };
+
+  const sorted = [...proposte].sort((a, b) => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    switch (sortKey) {
+      case "codice_redenzione": return dir * a.codice_redenzione.localeCompare(b.codice_redenzione);
+      case "stato": return dir * a.stato.localeCompare(b.stato);
+      case "risparmio_stimato": return dir * (a.risparmio_stimato - b.risparmio_stimato);
+      case "created_at": return dir * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      default: return 0;
+    }
+  });
+
   const totalPages = Math.ceil(total / limit);
+
+  const SortIcon = ({ col }: { col: SortKey }) => (
+    <span className="ml-1 text-[10px]">{sortKey === col ? (sortDir === "asc" ? "▲" : "▼") : "△"}</span>
+  );
 
   return (
     <div>
       <h1 className="text-white text-2xl font-bold mb-6">Proposte</h1>
 
       {/* Filters */}
-      <div className="flex gap-3 mb-6">
+      <div className="flex flex-wrap gap-3 mb-6">
         <input
           type="text"
           value={search}
@@ -80,28 +106,31 @@ export default function AdminPropostePage() {
         <button onClick={handleSearch} className="bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-semibold px-4 py-2 rounded-lg text-sm transition-all">
           Cerca
         </button>
+        <div className="flex items-center text-gray-400 text-sm ml-auto">
+          {total} risultati
+        </div>
       </div>
 
       {/* Table */}
       {loading ? (
         <div className="text-gray-400 text-center py-10">Caricamento…</div>
-      ) : proposte.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <div className="text-gray-500 text-center py-10">Nessuna proposta trovata</div>
       ) : (
-        <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+        <div className="bg-white/5 border border-white/10 rounded-xl overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-gray-400 text-xs border-b border-white/10">
-                <th className="text-left p-3">Codice</th>
+                <th className="text-left p-3 cursor-pointer hover:text-white" onClick={() => handleSort("codice_redenzione")}>Codice <SortIcon col="codice_redenzione" /></th>
                 <th className="text-left p-3">Cliente</th>
-                <th className="text-left p-3">Stato</th>
-                <th className="text-right p-3">Risparmio</th>
+                <th className="text-left p-3 cursor-pointer hover:text-white" onClick={() => handleSort("stato")}>Stato <SortIcon col="stato" /></th>
+                <th className="text-right p-3 cursor-pointer hover:text-white" onClick={() => handleSort("risparmio_stimato")}>Risparmio <SortIcon col="risparmio_stimato" /></th>
                 <th className="text-left p-3">Email</th>
-                <th className="text-right p-3">Data</th>
+                <th className="text-right p-3 cursor-pointer hover:text-white" onClick={() => handleSort("created_at")}>Data <SortIcon col="created_at" /></th>
               </tr>
             </thead>
             <tbody>
-              {proposte.map((p) => (
+              {sorted.map((p) => (
                 <>
                   <tr
                     key={p.id}
