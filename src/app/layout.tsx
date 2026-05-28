@@ -33,7 +33,7 @@ export default function RootLayout({
         <ThemeProvider>
           {children}
           <footer className="text-[var(--text-dim)] text-[10px] text-center py-3 px-4 leading-snug">
-            Web app a solo scopo dimostrativo — qualsiasi uso non espressamente autorizzato dal proprietario non è consentito.
+            Web app a solo scopo dimostrativo — qualsiasi uso non espressamente autorizzato non è consentito.
             Le offerte generate sono puramente dimostrative e non costituiscono proposte commerciali reali.
           </footer>
         </ThemeProvider>
