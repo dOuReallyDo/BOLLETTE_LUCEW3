@@ -24,15 +24,6 @@ export async function POST(req: NextRequest) {
   const password = typeof body?.password === "string" ? body.password : "";
   const expected = process.env.ADMIN_PASSWORD || "";
 
-  if (req.nextUrl.searchParams.get("debug") === "1") {
-    return NextResponse.json({
-      ADMIN_PASSWORD: !!process.env.ADMIN_PASSWORD,
-      SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      RESEND_API_KEY: !!process.env.RESEND_API_KEY,
-    });
-  }
-
   if (!expected || !timingSafeEqual(password, expected)) {
     return NextResponse.json({ error: "Password non valida" }, { status: 401 });
   }
