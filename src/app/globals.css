@@ -373,3 +373,13 @@ body {
 .windtre .w3-grad-gas   { background-image: linear-gradient(135deg, var(--w3-gas-from), var(--w3-gas-to)); }
 .windtre .w3-grad-brand { background-image: linear-gradient(135deg, var(--w3-orange), var(--w3-orange-600)); }
 .windtre .w3-grad-teal  { background-image: linear-gradient(135deg, var(--w3-teal-from), var(--w3-teal-to)); }
+/* Keep white text on WINDTRE orange / gradient surfaces (overrides the light-theme
+   rule that would otherwise darken .text-white). Higher specificity + !important. */
+.windtre .bg-\[\#ea580c\] .text-white,
+.windtre .bg-\[\#ea580c\].text-white,
+.windtre .w3-grad-brand,
+.windtre .w3-grad-brand .text-white,
+.windtre .w3-grad-luce,
+.windtre .w3-grad-luce .text-white,
+.windtre .w3-grad-gas,
+.windtre .w3-grad-gas .text-white { color: #ffffff !important; }

@@ -420,20 +420,24 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1a1a2e] to-[#16213e]">
-      {/* Header — sticky */}
-      <header className="sticky top-0 z-50 bg-[#FF6B00] py-5 px-6 shadow-lg">
+    <div className="windtre min-h-screen bg-gradient-to-b from-white to-[#fff7ed]" data-theme="light">
+      {/* Header — sticky (WINDTRE LUCE&GAS) */}
+      <header className="sticky top-0 z-50 bg-white border-b border-black/5 py-3 px-6 shadow-sm">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <button
             onClick={() => { setStep("upload"); setError(""); setExtractedData(null); setEditedData(null); setProposal(null); setFile(null); setElapsedSeconds(0); setConfirmedDownload(false); }}
-            className="text-left cursor-pointer"
+            className="text-left cursor-pointer flex items-center"
+            aria-label="WINDTRE LUCE&GAS — home"
           >
-            <h1 className="text-white font-bold text-xl leading-tight">Luce & Gas</h1>
-            <p className="text-orange-100 text-xs">Scopri quanto puoi risparmiare</p>
+            <span className="font-extrabold tracking-tight text-2xl lowercase">
+              <span className="text-[#00a9e0]">luce</span>
+              <span className="text-[#ea580c] mx-1">&amp;</span>
+              <span className="text-[#7bc043]">gas</span>
+            </span>
           </button>
           <button
             onClick={toggleTheme}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-[#0f172a] hover:bg-black/5 transition-colors"
             title={theme === "dark" ? "Tema chiaro" : "Tema scuro"}
           >
             {theme === "dark" ? (
@@ -467,7 +471,7 @@ export default function Home() {
             )}
             <button
               onClick={() => { setStep("upload"); setError(""); setExtractedData(null); setEditedData(null); setProposal(null); setFile(null); setElapsedSeconds(0); setConfirmedDownload(false); }}
-              className="bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-4 px-8 rounded-xl transition-all text-lg"
+              className="bg-[#ea580c] hover:bg-[#f97316] text-white font-bold py-4 px-8 rounded-xl transition-all text-lg"
             >
               ← Torna alla home e riprova
             </button>
@@ -486,8 +490,8 @@ export default function Home() {
             <label
               className={`block border-2 border-dashed rounded-xl p-12 cursor-pointer transition-all ${
                 dragActive
-                  ? "border-[#FF6B00] bg-[#FF6B00]/10"
-                  : "border-gray-500 hover:border-[#FF6B00] hover:bg-white/5"
+                  ? "border-[#ea580c] bg-[#ea580c]/10"
+                  : "border-gray-500 hover:border-[#ea580c] hover:bg-white/5"
               }`}
               onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
               onDragLeave={() => setDragActive(false)}
@@ -532,9 +536,9 @@ export default function Home() {
                 {/* Magnifying glass scanning: L→R then T→B, loop */}
                 <div className="absolute inset-0" style={{ animation: 'scanLoop 8s ease-in-out infinite' }}>
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="drop-shadow-lg">
-                    <circle cx="10" cy="10" r="7" stroke="#FF6B00" strokeWidth="2" fill="rgba(255,107,0,0.08)" />
+                    <circle cx="10" cy="10" r="7" stroke="#ea580c" strokeWidth="2" fill="rgba(255,107,0,0.08)" />
                     <circle cx="10" cy="10" r="5" stroke="#FFB347" strokeWidth="0.8" fill="none" opacity="0.5" />
-                    <line x1="15" y1="15" x2="21" y2="21" stroke="#FF6B00" strokeWidth="2.5" strokeLinecap="round" />
+                    <line x1="15" y1="15" x2="21" y2="21" stroke="#ea580c" strokeWidth="2.5" strokeLinecap="round" />
                     {/* Shine inside lens */}
                     <path d="M7 7 Q9 6 10 8" stroke="#FFD700" strokeWidth="0.8" fill="none" opacity="0.6" />
                   </svg>
@@ -546,7 +550,7 @@ export default function Home() {
               <p className="text-gray-300 text-sm mb-4">
                 Analizziamo i dati per trovare l&apos;offerta migliore per te
               </p>
-              <p className="text-[#FF6B00] text-3xl font-mono font-bold">
+              <p className="text-[#ea580c] text-3xl font-mono font-bold">
                 {elapsedSeconds}s
               </p>
               <p className="text-gray-500 text-xs mt-1">
@@ -555,7 +559,7 @@ export default function Home() {
               <div className="max-w-md mx-auto mt-4">
                 <div className="h-3 bg-white/10 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-[#FF6B00] to-[#FF8C42] rounded-full transition-all duration-1000"
+                    className="h-full bg-gradient-to-r from-[#ea580c] to-[#f97316] rounded-full transition-all duration-1000"
                     style={{ width: `${Math.min(100, Math.round((elapsedSeconds / 60) * 100))}%` }}
                   />
                 </div>
@@ -576,7 +580,7 @@ export default function Home() {
 
             {/* Cliente */}
             <div className="bg-white/5 rounded-xl p-5 mb-4">
-              <h3 className="text-[#FF6B00] font-semibold mb-3">👤 Intestatario</h3>
+              <h3 className="text-[#ea580c] font-semibold mb-3">👤 Intestatario</h3>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Nome" value={editedData.cliente.nome} onChange={(v) => updateField("cliente.nome", v)} />
                 <Field label="Cognome" value={editedData.cliente.cognome} onChange={(v) => updateField("cliente.cognome", v)} />
@@ -598,7 +602,7 @@ export default function Home() {
 
             {/* Fornitura */}
             <div className="bg-white/5 rounded-xl p-5 mb-4">
-              <h3 className="text-[#FF6B00] font-semibold mb-3">🏡 Fornitura</h3>
+              <h3 className="text-[#ea580c] font-semibold mb-3">🏡 Fornitura</h3>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Tipo" value={editedData.fornitura.tipo_fornitura} onChange={(v) => updateField("fornitura.tipo_fornitura", v)} />
                 <Field label={editedData.fornitura.tipo_punto} value={editedData.fornitura.codice_punto} onChange={(v) => updateField("fornitura.codice_punto", v)} />
@@ -609,7 +613,7 @@ export default function Home() {
 
             {/* Contratto */}
             <div className="bg-white/5 rounded-xl p-5 mb-4">
-              <h3 className="text-[#FF6B00] font-semibold mb-3">📋 Contratto attuale</h3>
+              <h3 className="text-[#ea580c] font-semibold mb-3">📋 Contratto attuale</h3>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Fornitore" value={editedData.contratto.brand_commerciale || ""} onChange={(v) => updateField("contratto.brand_commerciale", v)} />
                 <Field label="Offerta" value={editedData.contratto.nome_offerta || ""} onChange={(v) => updateField("contratto.nome_offerta", v)} />
@@ -619,7 +623,7 @@ export default function Home() {
 
             {/* Bolletta */}
             <div className="bg-white/5 rounded-xl p-5 mb-6">
-              <h3 className="text-[#FF6B00] font-semibold mb-3">💰 Bolletta</h3>
+              <h3 className="text-[#ea580c] font-semibold mb-3">💰 Bolletta</h3>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Totale da pagare" value={`€ ${editedData.bolletta.totale_da_pagare}`} disabled />
                 <Field label="Scadenza" value={editedData.bolletta.data_scadenza_pagamento || ""} onChange={(v) => updateField("bolletta.data_scadenza_pagamento", v)} />
@@ -630,7 +634,7 @@ export default function Home() {
 
             <button
               onClick={() => setStep("contact")}
-              className="w-full bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-4 rounded-xl transition-all text-lg"
+              className="w-full bg-[#ea580c] hover:bg-[#f97316] text-white font-bold py-4 rounded-xl transition-all text-lg"
             >
               Continua →
             </button>
@@ -649,7 +653,7 @@ export default function Home() {
 
             {/* Contatti */}
             <div className="bg-white/5 rounded-xl p-5 mb-4">
-              <h3 className="text-[#FF6B00] font-semibold mb-3">📧 Recapiti</h3>
+              <h3 className="text-[#ea580c] font-semibold mb-3">📧 Recapiti</h3>
               <div className="grid grid-cols-1 gap-3">
                 <div>
                   <label className="text-gray-400 text-xs block mb-1">Email *</label>
@@ -658,7 +662,7 @@ export default function Home() {
                     value={contactEmail}
                     onChange={(e) => setContactEmail(e.target.value)}
                     placeholder="nome@email.it"
-                    className="w-full bg-white/10 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none"
+                    className="w-full bg-white/10 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#ea580c] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -668,7 +672,7 @@ export default function Home() {
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
                     placeholder="+39 3XX XXX XXXX"
-                    className="w-full bg-white/10 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#FF6B00] focus:outline-none"
+                    className="w-full bg-white/10 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-[#ea580c] focus:outline-none"
                   />
                   <p className="text-gray-500 text-[10px] mt-1">
                     Per numeri italiani puoi omettere il prefisso +39
@@ -679,14 +683,14 @@ export default function Home() {
 
             {/* Consensi GDPR */}
             <div className="bg-white/5 rounded-xl p-5 mb-6">
-              <h3 className="text-[#FF6B00] font-semibold mb-3">🔒 Privacy e consensi</h3>
+              <h3 className="text-[#ea580c] font-semibold mb-3">🔒 Privacy e consensi</h3>
               <div className="space-y-4">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={consensoTrattamento}
                     onChange={(e) => setConsensoTrattamento(e.target.checked)}
-                    className="mt-1 w-5 h-5 rounded border-gray-600 bg-white/10 text-[#FF6B00] focus:ring-[#FF6B00] focus:ring-offset-0 flex-shrink-0"
+                    className="mt-1 w-5 h-5 rounded border-gray-600 bg-white/10 text-[#ea580c] focus:ring-[#ea580c] focus:ring-offset-0 flex-shrink-0"
                   />
                   <span className="text-white text-sm">
                     <strong>Trattamento dati *</strong> — Acconsento al trattamento dei miei dati personali per la elaborazione della proposta commerciale, ai sensi dell&apos;art. 6 GDPR. Obbligatorio per procedere.
@@ -697,7 +701,7 @@ export default function Home() {
                     type="checkbox"
                     checked={consensoMarketing}
                     onChange={(e) => setConsensoMarketing(e.target.checked)}
-                    className="mt-1 w-5 h-5 rounded border-gray-600 bg-white/10 text-[#FF6B00] focus:ring-[#FF6B00] focus:ring-offset-0 flex-shrink-0"
+                    className="mt-1 w-5 h-5 rounded border-gray-600 bg-white/10 text-[#ea580c] focus:ring-[#ea580c] focus:ring-offset-0 flex-shrink-0"
                   />
                   <span className="text-gray-300 text-sm">
                     <strong>Comunicazioni commerciali</strong> — Acconsento a ricevere comunicazioni commerciali su offerte e promozioni, ai sensi dell&apos;art. 7 GDPR. Facoltativo.
@@ -708,7 +712,7 @@ export default function Home() {
                     type="checkbox"
                     checked={consensoProfilazione}
                     onChange={(e) => setConsensoProfilazione(e.target.checked)}
-                    className="mt-1 w-5 h-5 rounded border-gray-600 bg-white/10 text-[#FF6B00] focus:ring-[#FF6B00] focus:ring-offset-0 flex-shrink-0"
+                    className="mt-1 w-5 h-5 rounded border-gray-600 bg-white/10 text-[#ea580c] focus:ring-[#ea580c] focus:ring-offset-0 flex-shrink-0"
                   />
                   <span className="text-gray-300 text-sm">
                     <strong>Profilazione</strong> — Acconsento alla profilazione dei miei dati per ricevere proposte personalizzate, ai sensi dell&apos;art. 7 GDPR. Facoltativo.
@@ -727,7 +731,7 @@ export default function Home() {
               <button
                 onClick={handleConfirm}
                 disabled={saving || !consensoTrattamento || !contactEmail.trim()}
-                className="flex-2 bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-4 rounded-xl transition-all text-lg disabled:opacity-50"
+                className="flex-2 bg-[#ea580c] hover:bg-[#f97316] text-white font-bold py-4 rounded-xl transition-all text-lg disabled:opacity-50"
               >
                 {saving ? "Calcolo proposta…" : "Vedi la tua proposta →"}
               </button>
@@ -759,11 +763,11 @@ export default function Home() {
             <p className="text-gray-300 mb-6 leading-relaxed max-w-md mx-auto">
               Abbiamo fatto i conti, ci siamo arrotolati le maniche, abbiamo tentato ogni spread del catalogo…
               ma il tuo fornitore attuale ti ha davvero fatto un{' '}
-              <span className="text-[#FF6B00] font-bold">prezzo da campione</span>.
+              <span className="text-[#ea580c] font-bold">prezzo da campione</span>.
             </p>
 
-            <div className="bg-[#FF6B00]/10 border border-[#FF6B00]/30 rounded-xl p-5 mb-6 max-w-sm mx-auto">
-              <p className="text-[#FF6B00] text-sm font-semibold mb-1">Il tuo prezzo attuale</p>
+            <div className="bg-[#ea580c]/10 border border-[#ea580c]/30 rounded-xl p-5 mb-6 max-w-sm mx-auto">
+              <p className="text-[#ea580c] text-sm font-semibold mb-1">Il tuo prezzo attuale</p>
               <p className="text-white text-3xl font-bold">
                 €{proposal.prezzo_corrente.toFixed(2)}/mese
               </p>
@@ -775,12 +779,12 @@ export default function Home() {
             <p className="text-gray-300 mb-6 leading-relaxed max-w-md mx-auto">
               Sul solo prezzo dell&apos;energia, per dire la verità,{' '}
               <span className="italic">non riusciamo a batterti</span>. Ma se ti va, possiamo{' '}
-              <span className="text-[#FF6B00] font-semibold">rilanciare con qualcosa di più ricco</span> per te…
+              <span className="text-[#ea580c] font-semibold">rilanciare con qualcosa di più ricco</span> per te…
             </p>
 
             {/* Convergenza — bundle value proposition */}
             <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6 text-left">
-              <h3 className="text-[#FF6B00] font-semibold mb-3 text-center">⚡ E se ti dicessimo che c&apos;è di più?</h3>
+              <h3 className="text-[#ea580c] font-semibold mb-3 text-center">⚡ E se ti dicessimo che c&apos;è di più?</h3>
               <p className="text-gray-300 text-sm mb-4 leading-relaxed">
                 Sulla sola componente energia non possiamo offrirti di meno. Ma il risparmio vero non è solo sul prezzo al kWh — è nel <span className="text-white font-medium">pacchetto totale</span>:
               </p>
@@ -812,14 +816,14 @@ export default function Home() {
               <p className="text-gray-400 text-xs leading-relaxed italic">
                 &ldquo;Sinceramente? Quando il prezzo del competitor è questo, noi festeggiamo per te e ci mettiamo a studiare offerte migliori. Se le cose dovessero cambiare — e nel mercato energia cambiano sempre — saremo i primi a farti sapere che abbiamo qualcosa da urlo.&rdquo;
               </p>
-              <p className="text-[#FF6B00] text-xs mt-2 font-semibold">— Il team Luce & Gas 🧡</p>
+              <p className="text-[#ea580c] text-xs mt-2 font-semibold">— Il team Luce & Gas 🧡</p>
             </div>
 
             {/* CTA */}
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => setStep("proposal")}
-                className="w-full bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-4 rounded-xl transition-all text-lg"
+                className="w-full bg-[#ea580c] hover:bg-[#f97316] text-white font-bold py-4 rounded-xl transition-all text-lg"
               >
                 Vedere comunque la nostra proposta →
               </button>
@@ -864,9 +868,9 @@ export default function Home() {
             </div>
 
             {/* Savings */}
-            <div className="bg-[#FF6B00]/20 border border-[#FF6B00]/40 rounded-xl p-6 text-center mb-8">
-              <p className="text-[#FF6B00] text-lg font-semibold">Risparmio stimato</p>
-              <p className="text-[#FF6B00] text-5xl font-bold mt-2">
+            <div className="bg-[#ea580c]/20 border border-[#ea580c]/40 rounded-xl p-6 text-center mb-8">
+              <p className="text-[#ea580c] text-lg font-semibold">Risparmio stimato</p>
+              <p className="text-[#ea580c] text-5xl font-bold mt-2">
                 €{proposal.risparmio_stimato.toFixed(2)}/mese
               </p>
             </div>
@@ -964,7 +968,7 @@ export default function Home() {
             {/* Personal code */}
             <div className="bg-[#1a1a2e] border border-white/20 rounded-xl p-6 text-center mb-8">
               <p className="text-gray-400 text-sm mb-2">Il tuo codice personale</p>
-              <p className="text-[#FF6B00] text-4xl font-mono tracking-[0.3em] font-bold">
+              <p className="text-[#ea580c] text-4xl font-mono tracking-[0.3em] font-bold">
                 {proposal.codice_redenzione}
               </p>
               <p className="text-gray-500 text-xs mt-2">Valido per 30 giorni — identificativo univoco della tua proposta</p>
@@ -974,7 +978,7 @@ export default function Home() {
             {!confirmedDownload ? (
               <button
                 onClick={() => setConfirmedDownload(true)}
-                className="w-full bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-4 rounded-xl transition-all text-lg"
+                className="w-full bg-[#ea580c] hover:bg-[#f97316] text-white font-bold py-4 rounded-xl transition-all text-lg"
               >
                 Conferma per scaricare la proposta e essere ricontattato
               </button>
@@ -1022,7 +1026,7 @@ function Field({
             ? "border-red-400 focus:border-red-400"
             : disabled
               ? "border-gray-600 opacity-60"
-              : "border-gray-600 focus:border-[#FF6B00]"
+              : "border-gray-600 focus:border-[#ea580c]"
         } focus:outline-none`}
       />
       {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
