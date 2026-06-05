@@ -25,7 +25,12 @@ export async function POST(req: NextRequest) {
   const expected = process.env.ADMIN_PASSWORD || "";
 
   if (req.nextUrl.searchParams.get("debug") === "1") {
-    return NextResponse.json({ gotLen: password.length, expectedLen: expected.length, hasEnv: !!process.env.ADMIN_PASSWORD });
+    return NextResponse.json({
+      ADMIN_PASSWORD: !!process.env.ADMIN_PASSWORD,
+      SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      RESEND_API_KEY: !!process.env.RESEND_API_KEY,
+    });
   }
 
   if (!expected || !timingSafeEqual(password, expected)) {
