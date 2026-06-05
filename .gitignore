@@ -40,3 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env.local
+
+# internal analysis docs (local only)
+ANALISI-COMPARATIVA-*.md
