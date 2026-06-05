@@ -24,6 +24,10 @@ export async function POST(req: NextRequest) {
   const password = typeof body?.password === "string" ? body.password : "";
   const expected = process.env.ADMIN_PASSWORD || "";
 
+  if (req.nextUrl.searchParams.get("debug") === "1") {
+    return NextResponse.json({ gotLen: password.length, expectedLen: expected.length, hasEnv: !!process.env.ADMIN_PASSWORD });
+  }
+
   if (!expected || !timingSafeEqual(password, expected)) {
     return NextResponse.json({ error: "Password non valida" }, { status: 401 });
   }
