@@ -23,7 +23,7 @@ export async function middleware(request: NextRequest) {
 
   // Everything else under /admin (pages AND data APIs) requires the password.
   if (pathname.startsWith("/admin")) {
-    const password = process.env.ADMIN_PASSWORD || "";
+    const password = (process.env.ADMIN_PASSWORD || "").trim();
     const cookie = request.cookies.get(COOKIE)?.value;
     const expected = password ? await sha256hex(password) : "";
     if (!expected || cookie !== expected) {

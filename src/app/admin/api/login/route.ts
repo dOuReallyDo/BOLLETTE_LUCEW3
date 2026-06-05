@@ -22,9 +22,9 @@ function timingSafeEqual(a: string, b: string): boolean {
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const password = typeof body?.password === "string" ? body.password : "";
-  const expected = process.env.ADMIN_PASSWORD || "";
+  const expected = (process.env.ADMIN_PASSWORD || "").trim();
 
-  if (!expected || !timingSafeEqual(password, expected)) {
+  if (!expected || !timingSafeEqual(password.trim(), expected)) {
     return NextResponse.json({ error: "Password non valida" }, { status: 401 });
   }
 
