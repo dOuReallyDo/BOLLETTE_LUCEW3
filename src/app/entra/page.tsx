@@ -30,7 +30,7 @@ export default function EntraPage() {
   }
 
   return (
-    <main className="windtre min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-white to-[#fff7ed]">
+    <main className="windtre min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-[#f0fdf4] to-[#ecfdf5]">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm rounded-2xl border border-black/5 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)] p-8"

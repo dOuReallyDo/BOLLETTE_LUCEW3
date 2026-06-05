@@ -420,7 +420,7 @@ export default function Home() {
   };
 
   return (
-    <div className="windtre min-h-screen bg-gradient-to-b from-white to-[#fff7ed]" data-theme="light">
+    <div className="windtre min-h-screen bg-gradient-to-b from-[#f0fdf4] to-[#ecfdf5]" data-theme="light">
       {/* Header — sticky (WINDTRE LUCE&GAS) */}
       <header className="sticky top-0 z-50 bg-white border-b border-black/5 py-3 px-6 shadow-sm">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
@@ -480,18 +480,24 @@ export default function Home() {
 
         {/* Step 1: Upload */}
         {step === "upload" && (
-          <div className="bg-white/10 backdrop-blur rounded-2xl p-8 text-center">
-            <h2 className="text-white text-2xl font-bold mb-2">
+          <div className="bg-white rounded-2xl border border-black/5 shadow-[0_10px_40px_rgba(0,0,0,0.06)] p-8 text-center">
+            <h2 className="text-[#0f172a] text-2xl font-extrabold tracking-tight mb-3">
               Inviaci la tua bolletta
             </h2>
-            <p className="text-gray-300 mb-8">
-              Carica il PDF o una foto della tua bolletta luce o gas e scopri quanto puoi risparmiare
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold w3-grad-luce text-white rounded-full px-3 py-1">⚡ Luce</span>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold w3-grad-gas text-white rounded-full px-3 py-1">🔥 Gas</span>
+            </div>
+            <p className="text-[var(--w3-muted)] mb-8">
+              Carica il PDF o una foto della tua bolletta{" "}
+              <span className="text-[#00a9e0] font-semibold">luce</span> o{" "}
+              <span className="text-[#7bc043] font-semibold">gas</span> e scopri quanto puoi risparmiare
             </p>
             <label
               className={`block border-2 border-dashed rounded-xl p-12 cursor-pointer transition-all ${
                 dragActive
-                  ? "border-[#ea580c] bg-[#ea580c]/10"
-                  : "border-gray-500 hover:border-[#ea580c] hover:bg-white/5"
+                  ? "border-[#00a9e0] bg-[#00a9e0]/10"
+                  : "border-black/15 hover:border-[#00a9e0] hover:bg-[#f0fdf4]"
               }`}
               onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
               onDragLeave={() => setDragActive(false)}
@@ -508,14 +514,14 @@ export default function Home() {
                 onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
               />
               <div className="text-5xl mb-4">📄</div>
-              <p className="text-white font-semibold mb-1">
+              <p className="text-[#0f172a] font-semibold mb-1">
                 Trascina qui la tua bolletta
               </p>
-              <p className="text-gray-400 text-sm">
+              <p className="text-[var(--w3-muted)] text-sm">
                 oppure clicca per selezionare un file (PDF, JPG, PNG)
               </p>
             </label>
-            <p className="text-gray-500 text-xs mt-6">
+            <p className="text-[var(--w3-muted)] text-xs mt-6">
               I tuoi dati sono al sicuro — usati solo per preparare la proposta
             </p>
           </div>
