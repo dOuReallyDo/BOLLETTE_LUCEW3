@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { supabaseBrowser } from "@/lib/supabase/browser";
 import { useTheme } from "@/lib/theme";
 
 const navItems = [
@@ -21,20 +20,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
-    // Skip auth check for login page
-    if (pathname === "/admin/login" || pathname === "/admin") {
-      setLoading(false);
-      return;
-    }
-    supabaseBrowser.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
-        router.push("/admin/login");
-      } else {
-        setAuthed(true);
-      }
-      setLoading(false);
-    });
-  }, [pathname, router]);
+    // Auth is enforced server-side by middleware (shared-password cookie).
+    // The cookie is HttpOnly; unauthorized requests are redirected to
+    // /admin/login by middleware before reaching the client.
+    setAuthed(true);
+    setLoading(false);
+  }, [pathname]);
 
   // Login page renders without sidebar
   if (pathname === "/admin/login") {
@@ -59,8 +50,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const handleLogout = async () => {
-    await supabaseBrowser.auth.signOut();
+    await fetch("/admin/api/login", { method: "DELETE" });
     router.push("/admin/login");
+    router.refresh();
   };
 
   return (

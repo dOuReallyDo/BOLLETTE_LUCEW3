@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabaseBrowser } from "@/lib/supabase/browser";
 import { useTheme } from "@/lib/theme";
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,15 +16,21 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError("");
 
-    const { error } = await supabaseBrowser.auth.signInWithPassword({ email, password });
+    const res = await fetch("/admin/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
 
-    if (error) {
-      setError(error.message);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data?.error || "Password non valida");
       setLoading(false);
       return;
     }
 
     router.push("/admin/dashboard");
+    router.refresh();
   };
 
   return (
@@ -41,25 +45,10 @@ export default function AdminLoginPage() {
         <div className="text-center mb-8">
           <div className="text-4xl mb-2">🔒</div>
           <h1 className={`text-2xl font-bold ${theme === "light" ? "text-gray-900" : "text-white"}`}>Admin Dashboard</h1>
-          <p className={`text-sm mt-1 ${theme === "light" ? "text-gray-400" : "text-gray-400"}`}>Luce & Gas POC — Accesso riservato</p>
+          <p className={`text-sm mt-1 ${theme === "light" ? "text-gray-400" : "text-gray-400"}`}>Luce &amp; Gas POC — Accesso riservato</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className={`text-xs block mb-1 ${theme === "light" ? "text-gray-500" : "text-gray-400"}`}>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={`w-full rounded-lg px-3 py-2.5 text-sm focus:border-[#FF6B00] focus:outline-none ${
-                theme === "light"
-                  ? "bg-white text-gray-900 border border-gray-300"
-                  : "bg-white/10 text-white border border-gray-600"
-              }`}
-              placeholder="admin@example.com"
-              required
-            />
-          </div>
           <div>
             <label className={`text-xs block mb-1 ${theme === "light" ? "text-gray-500" : "text-gray-400"}`}>Password</label>
             <input
@@ -72,6 +61,7 @@ export default function AdminLoginPage() {
                   : "bg-white/10 text-white border border-gray-600"
               }`}
               placeholder="••••••••"
+              autoFocus
               required
             />
           </div>
