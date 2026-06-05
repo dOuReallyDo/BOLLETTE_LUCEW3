@@ -345,3 +345,31 @@ body {
   95%  { transform: translate(-4px, 48px); }
   100% { transform: translate(-4px, -4px); }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   WINDTRE LUCE&GAS brand theme — consumer simulator (/simulatore)
+   Scoped under .windtre so it never affects the admin/CRM theme.
+   Palette + tokens extracted from the simulatore-bolletta-w3 POC.
+   ═══════════════════════════════════════════════════════════ */
+.windtre {
+  --w3-orange: #f97316;
+  --w3-orange-600: #ea580c;
+  --w3-orange-50: #fff7ed;
+  --w3-orange-900: #7c2d12;
+  --w3-luce-from: #00b5e2;
+  --w3-luce-to: #00a9e0;
+  --w3-gas-from: #7bc043;
+  --w3-gas-to: #6fb33f;
+  --w3-teal-from: #a8e6e3;
+  --w3-teal-to: #7dd5b8;
+  --w3-ink: #0f172a;
+  --w3-muted: #64748b;
+  --w3-radius: 0.75rem;
+  font-family: var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--w3-ink);
+  background: #ffffff;
+}
+.windtre .w3-grad-luce  { background-image: linear-gradient(135deg, var(--w3-luce-from), var(--w3-luce-to)); }
+.windtre .w3-grad-gas   { background-image: linear-gradient(135deg, var(--w3-gas-from), var(--w3-gas-to)); }
+.windtre .w3-grad-brand { background-image: linear-gradient(135deg, var(--w3-orange), var(--w3-orange-600)); }
+.windtre .w3-grad-teal  { background-image: linear-gradient(135deg, var(--w3-teal-from), var(--w3-teal-to)); }
