@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 // Two server-side password gates (same model as the other projects):
-//  - PUBLIC site ("/", "/proposal", public APIs)  → SITE_PASSWORD
+//  - PUBLIC site ("/", "/proposal", public APIs)  → SITE_PASSWORD  (default "forz4n4poli")
 //  - ADMIN area ("/admin/*")                        → ADMIN_PASSWORD
 // Cookies hold the SHA-256 of the password (never the password), HttpOnly.
 const ADMIN_COOKIE = "admin_session";
@@ -29,7 +29,7 @@ export async function middleware(request: NextRequest) {
 
   // ── ADMIN area → ADMIN_PASSWORD ──────────────────────────────
   if (pathname.startsWith("/admin")) {
-    const password = (process.env.ADMIN_PASSWORD || "").trim();
+    const password = (process.env.ADMIN_PASSWORD || "drWho91!").trim();
     const expected = password ? await sha256hex(password) : "";
     if (!expected || request.cookies.get(ADMIN_COOKIE)?.value !== expected) {
       if (pathname.startsWith("/admin/api/")) {
@@ -40,10 +40,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ── PUBLIC area → SITE_PASSWORD ──────────────────────────────
-  const sitePassword = (process.env.SITE_PASSWORD || "").trim();
-  const siteExpected = sitePassword ? await sha256hex(sitePassword) : "";
-  if (!siteExpected || request.cookies.get(SITE_COOKIE)?.value !== siteExpected) {
+  // ── PUBLIC area → SITE_PASSWORD (default forz4n4poli) ────────
+  const sitePassword = (process.env.SITE_PASSWORD || "forz4n4poli").trim();
+  const siteExpected = await sha256hex(sitePassword);
+  if (request.cookies.get(SITE_COOKIE)?.value !== siteExpected) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
