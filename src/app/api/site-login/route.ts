@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Public site gate login. Same model as the other projects: server-side
-// password check, HttpOnly cookie holding SHA-256(password). Default password
-// "forz4n4poli" (override with SITE_PASSWORD env).
+// password check, HttpOnly cookie holding SHA-256(password). Password is
+// configured via the SITE_PASSWORD env (no hardcoded fallback).
 const COOKIE = "site_session";
 
 async function sha256hex(s: string): Promise<string> {
@@ -22,7 +22,7 @@ function timingSafeEqual(a: string, b: string): boolean {
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const password = typeof body?.password === "string" ? body.password : "";
-  const expected = (process.env.SITE_PASSWORD || "forz4n4poli").trim();
+  const expected = (process.env.SITE_PASSWORD || "").trim();
 
   if (!expected || !timingSafeEqual(password.trim(), expected)) {
     return NextResponse.json({ error: "Password non valida" }, { status: 401 });
