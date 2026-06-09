@@ -1,7 +1,5 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
-
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 interface ProposalEmailData {
@@ -19,6 +17,7 @@ export async function sendProposalEmail(
 ): Promise<void> {
   const proposalUrl = `${APP_URL}/proposal?code=${code}`;
 
+  const resend = new Resend(process.env.RESEND_API_KEY!);
   await resend.emails.send({
     from: "Luce&Gas <onboarding@resend.dev>",
     to: process.env.RESEND_TEST_TO || to,

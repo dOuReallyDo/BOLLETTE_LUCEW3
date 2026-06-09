@@ -1,7 +1,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { extractedBillDataSchema, type ValidatedBillData } from "./validation";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+// Lazy + memoized: Workers expose env only per-request, not at module load.
+let _genAI: GoogleGenerativeAI | null = null;
+function getGenAI(): GoogleGenerativeAI {
+  return (_genAI ??= new GoogleGenerativeAI(process.env.GEMINI_API_KEY!));
+}
 
 const EXTRACTION_MODEL = "gemini-2.5-flash";
 
@@ -105,7 +109,7 @@ REGOLE IMPORTANTI:
  * Extract bill data from text (PDF native text extraction path)
  */
 export async function extractFromText(text: string): Promise<ValidatedBillData> {
-  const model = genAI.getGenerativeModel({
+  const model = getGenAI().getGenerativeModel({
     model: EXTRACTION_MODEL,
     generationConfig: {
       temperature: 0,
@@ -135,7 +139,7 @@ export async function extractFromText(text: string): Promise<ValidatedBillData> 
  * Extract bill data from image (OCR/photo path)
  */
 export async function extractFromImage(imageBase64: string, mimeType: string): Promise<ValidatedBillData> {
-  const model = genAI.getGenerativeModel({
+  const model = getGenAI().getGenerativeModel({
     model: EXTRACTION_MODEL,
     generationConfig: {
       temperature: 0,

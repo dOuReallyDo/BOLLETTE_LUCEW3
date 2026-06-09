@@ -43,3 +43,7 @@ next-env.d.ts
 
 # internal analysis docs (local only)
 ANALISI-COMPARATIVA-*.md
+
+# Cloudflare / OpenNext
+.open-next/
+.wrangler/
