@@ -97,8 +97,10 @@ export default function ProposalPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a1a2e] to-[#16213e]">
-      <header className="bg-[#FF6B00] py-5 px-6 shadow-lg">
+      <header className="bg-[#fc4a14] py-5 px-6 shadow-lg no-print">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/w3-lucegas-logo.png" alt="WINDTRE LUCE&GAS" className="h-9 w-auto bg-white rounded-md px-2 py-1" />
           <h1 className="text-white font-bold text-xl">Luce & Gas</h1>
         </div>
       </header>
@@ -124,13 +126,13 @@ export default function ProposalPage() {
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               maxLength={6}
               placeholder="ABC123"
-              className="bg-white/10 text-white text-center text-3xl font-mono tracking-[0.5em] border border-gray-600 rounded-xl px-6 py-4 focus:border-[#FF6B00] focus:outline-none mb-6 w-full max-w-xs mx-auto"
+              className="bg-white/10 text-white text-center text-3xl font-mono tracking-[0.5em] border border-gray-600 rounded-xl px-6 py-4 focus:border-[#fc4a14] focus:outline-none mb-6 w-full max-w-xs mx-auto"
               onKeyDown={(e) => e.key === "Enter" && handleLookup()}
             />
             <button
               onClick={handleLookup}
               disabled={loading || code.length < 6}
-              className="bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-3 px-8 rounded-xl transition-all disabled:opacity-50"
+              className="bg-[#fc4a14] hover:bg-[#ff7a47] text-white font-bold py-3 px-8 rounded-xl transition-all disabled:opacity-50"
             >
               {loading ? "…" : "Vedi la tua offerta →"}
             </button>
@@ -167,9 +169,9 @@ export default function ProposalPage() {
             </div>
 
             {/* Savings */}
-            <div className="bg-[#FF6B00]/20 border border-[#FF6B00]/40 rounded-xl p-6 text-center mb-8">
-              <p className="text-[#FF6B00] text-lg font-semibold">Risparmio stimato</p>
-              <p className="text-[#FF6B00] text-5xl font-bold mt-2">
+            <div className="bg-[#fc4a14]/20 border border-[#fc4a14]/40 rounded-xl p-6 text-center mb-8">
+              <p className="text-[#fc4a14] text-lg font-semibold">Risparmio stimato</p>
+              <p className="text-[#fc4a14] text-5xl font-bold mt-2">
                 €{proposal.risparmio_stimato.toFixed(2)}/mese
               </p>
             </div>
@@ -263,9 +265,15 @@ export default function ProposalPage() {
             <button
               onClick={handleAccept}
               disabled={loading}
-              className="w-full bg-[#FF6B00] hover:bg-[#FF8C42] text-white font-bold py-4 rounded-xl transition-all text-lg disabled:opacity-50"
+              className="w-full bg-[#fc4a14] hover:bg-[#ff7a47] text-white font-bold py-4 rounded-xl transition-all text-lg disabled:opacity-50 no-print"
             >
               {loading ? "…" : "Accetta l'offerta ✓"}
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="w-full mt-3 bg-transparent border border-white/30 hover:border-white/60 text-white font-semibold py-3 rounded-xl transition-all no-print"
+            >
+              Scarica PDF 📄
             </button>
           </div>
         )}
@@ -280,7 +288,7 @@ export default function ProposalPage() {
               Grazie {proposal?.clienti.nome}! Ti contatteremo per completare l&apos;attivazione.
             </p>
             <p className="text-gray-500 text-sm">
-              Codice: <span className="font-mono text-[#FF6B00]">{proposal?.codice_redenzione}</span>
+              Codice: <span className="font-mono text-[#fc4a14]">{proposal?.codice_redenzione}</span>
             </p>
           </div>
         )}

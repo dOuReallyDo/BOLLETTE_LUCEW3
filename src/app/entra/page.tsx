@@ -38,7 +38,7 @@ export default function EntraPage() {
         <div className="text-center mb-7">
           <div className="font-extrabold tracking-tight text-3xl lowercase mb-1">
             <span className="text-[#00a9e0]">luce</span>
-            <span className="text-[#ea580c] mx-1">&amp;</span>
+            <span className="text-[#fc4a14] mx-1">&amp;</span>
             <span className="text-[#7bc043]">gas</span>
           </div>
           <p className="text-sm text-[var(--w3-muted)]">Inserisci la password per accedere</p>
@@ -51,7 +51,7 @@ export default function EntraPage() {
           placeholder="Password"
           autoFocus
           required
-          className="w-full rounded-xl border border-black/15 px-4 py-3 text-[#0f172a] focus:border-[#ea580c] focus:outline-none mb-3"
+          className="w-full rounded-xl border border-black/15 px-4 py-3 text-[#0f172a] focus:border-[#fc4a14] focus:outline-none mb-3"
         />
 
         {error && (

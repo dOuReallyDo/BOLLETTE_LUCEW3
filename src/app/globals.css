@@ -11,10 +11,13 @@
   --text-secondary: #d1d5db;
   --text-muted: #9ca3af;
   --text-dim: #6b7280;
-  --accent: #FF6B00;
-  --accent-light: #FF8C42;
-  --accent-bg: rgba(255,107,0,0.20);
-  --accent-border: rgba(255,107,0,0.40);
+  --accent: #fc4a14;            /* arancio ufficiale WINDTRE */
+  --accent-light: #ff7a47;
+  --accent-bg: rgba(252,74,20,0.20);
+  --accent-border: rgba(252,74,20,0.40);
+  --accent-purple: #8b2fd6;     /* viola WINDTRE (variante dark) */
+  --gradient-orange: linear-gradient(135deg, #ff7a47, #d63809);
+  --gradient-purple: linear-gradient(135deg, #8b2fd6, #6207ab);
   --border: #374151;
   --input-bg: rgba(255,255,255,0.10);
   --input-border: #4b5563;
@@ -38,10 +41,13 @@
   --text-secondary: #374151;
   --text-muted: #6b7280;
   --text-dim: #9ca3af;
-  --accent: #E55800;
-  --accent-light: #FF7A1A;
-  --accent-bg: rgba(229,88,0,0.08);
-  --accent-border: rgba(229,88,0,0.25);
+  --accent: #fc4a14;            /* arancio ufficiale WINDTRE */
+  --accent-light: #ff6a3d;
+  --accent-bg: rgba(252,74,20,0.08);
+  --accent-border: rgba(252,74,20,0.25);
+  --accent-purple: #6207ab;     /* viola ufficiale WINDTRE */
+  --gradient-orange: linear-gradient(135deg, #ff8c1a, #e9410f);
+  --gradient-purple: linear-gradient(135deg, #7d2bc9, #6207ab);
   --border: #e5e7eb;
   --input-bg: #ffffff;
   --input-border: #d1d5db;
@@ -61,6 +67,14 @@
   --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+/* ═══ Stampa proposta (Scarica PDF) ═══ */
+@media print {
+  .no-print { display: none !important; }
+  body, div { background: #fff !important; }
+  [class*="text-white"] { color: #1a1a2e !important; }
+  [class*="text-gray"] { color: #374151 !important; }
 }
 
 body {
@@ -89,7 +103,7 @@ body {
   background: var(--bg-card-inner) !important;
 }
 
-/* Text — BUT not inside .bg-[#FF6B00] header (stays white) */
+/* Text — BUT not inside .bg-[#fc4a14] header (stays white) */
 [data-theme="light"] .text-gray-300 {
   color: var(--text-secondary);
 }
@@ -102,7 +116,7 @@ body {
   color: var(--text-dim);
 }
 
-[data-theme="light"] .text-\[\#FF6B00\] {
+[data-theme="light"] .text-\[\#fc4a14\] {
   color: var(--accent);
 }
 
@@ -111,12 +125,12 @@ body {
    All other text-white becomes dark text (var(--text-primary)). */
 
 /* text-white elements inside the orange header keep white */
-[data-theme="light"] .bg-\[#FF6B00\] .text-white {
+[data-theme="light"] .bg-\[#fc4a14\] .text-white {
   color: #ffffff !important;
 }
 
 /* Orange buttons with white text keep white (same-element case) */
-[data-theme="light"] .bg-\[#FF6B00\].text-white {
+[data-theme="light"] .bg-\[#fc4a14\].text-white {
   color: #ffffff !important;
 }
 
@@ -157,7 +171,7 @@ body {
 }
 
 /* Admin text */
-[data-theme="light"] .admin-view .text-white:not(.bg-\[#FF6B00\] .text-white):not(.bg-\[#FF6B00\]) {
+[data-theme="light"] .admin-view .text-white:not(.bg-\[#fc4a14\] .text-white):not(.bg-\[#fc4a14\]) {
   color: #1a1a2e !important;
 }
 
@@ -242,7 +256,7 @@ body {
 }
 
 /* Orange-100 subtext in header stays white in light mode */
-[data-theme="light"] .bg-\[\#FF6B00\] .text-orange-100 {
+[data-theme="light"] .bg-\[\#fc4a14\] .text-orange-100 {
   color: #ffedd5 !important;
 }
 
@@ -353,7 +367,7 @@ body {
    ═══════════════════════════════════════════════════════════ */
 .windtre {
   --w3-orange: #f97316;
-  --w3-orange-600: #ea580c;
+  --w3-orange-600: #fc4a14;
   --w3-orange-50: #fff7ed;
   --w3-orange-900: #7c2d12;
   --w3-luce-from: #00b5e2;
@@ -375,8 +389,8 @@ body {
 .windtre .w3-grad-teal  { background-image: linear-gradient(135deg, var(--w3-teal-from), var(--w3-teal-to)); }
 /* Keep white text on WINDTRE orange / gradient surfaces (overrides the light-theme
    rule that would otherwise darken .text-white). Higher specificity + !important. */
-.windtre .bg-\[\#ea580c\] .text-white,
-.windtre .bg-\[\#ea580c\].text-white,
+.windtre .bg-\[\#fc4a14\] .text-white,
+.windtre .bg-\[\#fc4a14\].text-white,
 .windtre .w3-grad-brand,
 .windtre .w3-grad-brand .text-white,
 .windtre .w3-grad-luce,
